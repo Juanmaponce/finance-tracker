@@ -22,7 +22,15 @@
       "Bash(npm run build:*)",
       "Bash(echo:*)",
       "Bash(npm test:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(gh auth status:*)",
+      "Bash(brew install:*)",
+      "Bash(gh auth login:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(ssh-add:*)",
+      "Bash(openssl rand:*)"
     ]
   }
 }
