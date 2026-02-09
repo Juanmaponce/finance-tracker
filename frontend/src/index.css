@@ -1,0 +1,164 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Primary - Teal (Wise-inspired) */
+  --color-primary-50: #E6FAF8;
+  --color-primary-100: #B3F0EA;
+  --color-primary-200: #80E6DC;
+  --color-primary-300: #4DDCCE;
+  --color-primary-400: #1AD2C0;
+  --color-primary-500: #00B9AE;
+  --color-primary-600: #009A91;
+  --color-primary-700: #007B74;
+  --color-primary-800: #005C57;
+  --color-primary-900: #003D3A;
+
+  /* Secondary - Dark Navy */
+  --color-secondary-50: #E8EAF0;
+  --color-secondary-100: #C5CAD6;
+  --color-secondary-200: #9AA3B8;
+  --color-secondary-300: #6F7C9A;
+  --color-secondary-400: #4F5E82;
+  --color-secondary-500: #2F406A;
+  --color-secondary-600: #273662;
+  --color-secondary-700: #1F2C57;
+  --color-secondary-800: #17224D;
+  --color-secondary-900: #0E1A3D;
+
+  /* Accent colors for categories */
+  --color-category-food: #FF6B6B;
+  --color-category-transport: #4ECDC4;
+  --color-category-entertainment: #45B7D1;
+  --color-category-shopping: #F7DC6F;
+  --color-category-health: #82E0AA;
+  --color-category-bills: #BB8FCE;
+  --color-category-other: #AEB6BF;
+
+  /* Semantic colors */
+  --color-income: #27AE60;
+  --color-expense: #E74C3C;
+  --color-warning: #F39C12;
+
+  /* Surface colors */
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F8FAFB;
+  --color-surface-dark: #1A1D23;
+  --color-surface-dark-secondary: #23272F;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Border radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+/*
+ * shadcn/ui semantic color tokens
+ * These power all shadcn components (Card, Button, Input, Label, etc.)
+ */
+:root {
+  --background: #FFFFFF;
+  --foreground: #0f172a;
+
+  --card: #FFFFFF;
+  --card-foreground: #0f172a;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #0f172a;
+
+  --primary: #00B9AE;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+
+  --destructive: #E74C3C;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #00B9AE;
+}
+
+.dark {
+  --background: #1A1D23;
+  --foreground: #f1f5f9;
+
+  --card: #23272F;
+  --card-foreground: #f1f5f9;
+
+  --popover: #23272F;
+  --popover-foreground: #f1f5f9;
+
+  --primary: #00B9AE;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #2d3341;
+  --secondary-foreground: #f1f5f9;
+
+  --muted: #2d3341;
+  --muted-foreground: #94a3b8;
+
+  --accent: #2d3341;
+  --accent-foreground: #f1f5f9;
+
+  --destructive: #E74C3C;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #3b4252;
+  --input: #3b4252;
+  --ring: #00B9AE;
+}
+
+/*
+ * Map CSS variables to Tailwind v4 theme tokens
+ * so that classes like bg-card, text-foreground, etc. work
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--border);
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100dvh;
+  }
+}

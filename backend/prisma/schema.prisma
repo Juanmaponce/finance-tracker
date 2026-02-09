@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// Users
+// ============================================
+model User {
+  id              String   @id @default(uuid()) @db.Uuid
+  email           String   @unique @db.VarChar(255)
+  passwordHash    String   @db.VarChar(255)
+  displayName     String   @db.VarChar(100)
+  primaryCurrency String   @default("USD") @db.Char(3)
+  darkMode        Boolean  @default(false)
+  locale          String   @default("es") @db.VarChar(10)
+  createdAt       DateTime @default(now()) @db.Timestamptz
+  updatedAt       DateTime @updatedAt @db.Timestamptz
+
+  transactions          Transaction[]
+  categories            Category[]
+  savingsGoals          SavingsGoal[]
+  recurringTransactions RecurringTransaction[]
+  refreshTokens         RefreshToken[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// ============================================
+// Refresh Tokens
+// ============================================
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// Categories
+// ============================================
+model Category {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @db.Uuid
+  name      String       @db.VarChar(50)
+  icon      String       @db.VarChar(50)
+  color     String       @db.Char(7)
+  type      CategoryType
+  isDefault Boolean      @default(false)
+  keywords  String[]     @db.Text
+  createdAt DateTime     @default(now()) @db.Timestamptz
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("categories")
+}
+
+// ============================================
+// Transactions
+// ============================================
+model Transaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  userId      String          @db.Uuid
+  amount      Decimal         @db.Decimal(15, 2)
+  currency    String          @db.Char(3)
+  categoryId  String          @db.Uuid
+  type        TransactionType @default(EXPENSE)
+  description String?         @db.Text
+  date        DateTime        @db.Timestamptz
+  receiptUrl  String?         @db.Text
+  isRecurring Boolean         @default(false)
+  recurringId String?         @db.Uuid
+  createdAt   DateTime        @default(now()) @db.Timestamptz
+  updatedAt   DateTime        @updatedAt @db.Timestamptz
+  deletedAt   DateTime?       @db.Timestamptz
+
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  recurring RecurringTransaction? @relation(fields: [recurringId], references: [id])
+
+  @@index([userId, date])
+  @@index([categoryId])
+  @@index([deletedAt])
+  @@index([userId, type])
+  @@map("transactions")
+}
+
+// ============================================
+// Recurring Transactions
+// ============================================
+model RecurringTransaction {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @db.Uuid
+  amount        Decimal   @db.Decimal(15, 2)
+  currency      String    @db.Char(3)
+  categoryId    String    @db.Uuid
+  description   String?   @db.Text
+  frequency     Frequency
+  nextExecution DateTime  @db.Timestamptz
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @db.Timestamptz
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId, nextExecution])
+  @@index([isActive])
+  @@map("recurring_transactions")
+}
+
+// ============================================
+// Savings Goals
+// ============================================
+model SavingsGoal {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @db.Uuid
+  name          String    @db.VarChar(100)
+  targetAmount  Decimal   @db.Decimal(15, 2)
+  currentAmount Decimal   @default(0) @db.Decimal(15, 2)
+  currency      String    @db.Char(3)
+  deadline      DateTime? @db.Timestamptz
+  createdAt     DateTime  @default(now()) @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("savings_goals")
+}
+
+// ============================================
+// Enums
+// ============================================
+enum TransactionType {
+  EXPENSE
+  INCOME
+
+  @@map("transaction_type")
+}
+
+enum CategoryType {
+  EXPENSE
+  INCOME
+
+  @@map("category_type")
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+
+  @@map("frequency")
+}

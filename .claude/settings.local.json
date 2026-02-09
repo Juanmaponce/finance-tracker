@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew upgrade:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx husky init:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(docker compose:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(ls:*)",
+      "Bash(pkill:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(npx eslint:*)",
+      "Bash(lsof:*)",
+      "Bash(npx --yes sharp-cli:*)",
+      "Bash(npx:*)",
+      "Bash(node -e:*)",
+      "Bash(npm run build:*)",
+      "Bash(echo:*)",
+      "Bash(npm test:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
