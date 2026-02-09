@@ -114,10 +114,11 @@ class ApiClient {
   }
 
   async patch<T>(endpoint: string, body?: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PATCH',
-      ...(body && { body: JSON.stringify(body) }),
-    });
+    const options: RequestInit = { method: 'PATCH' };
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+    return this.request<T>(endpoint, options);
   }
 
   async delete<T>(endpoint: string): Promise<T> {
@@ -126,13 +127,18 @@ class ApiClient {
 }
 
 export class ApiError extends Error {
+  statusCode: number;
+  errors?: Array<{ field: string; message: string }>;
+
   constructor(
     message: string,
-    public statusCode: number,
-    public errors?: Array<{ field: string; message: string }>,
+    statusCode: number,
+    errors?: Array<{ field: string; message: string }>,
   ) {
     super(message);
     this.name = 'ApiError';
+    this.statusCode = statusCode;
+    this.errors = errors;
   }
 }
 

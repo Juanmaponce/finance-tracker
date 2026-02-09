@@ -39,7 +39,7 @@ export function CategoryChart({ data, currency = 'USD' }: CategoryChartProps) {
             barSize={24}
             label={{
               position: 'right',
-              formatter: (value: number) => formatCurrency(value, currency),
+              formatter: (value: unknown) => formatCurrency(Number(value), currency),
               fontSize: 11,
               fill: 'var(--foreground)',
             }}

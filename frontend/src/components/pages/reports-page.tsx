@@ -313,7 +313,10 @@ export function ReportsPage() {
                         tickLine={false}
                       />
                       <Tooltip
-                        formatter={(value: number) => [formatCurrency(value, currency), 'Total']}
+                        formatter={(value: unknown) => [
+                          formatCurrency(Number(value), currency),
+                          'Total',
+                        ]}
                         contentStyle={{
                           borderRadius: 8,
                           fontSize: 12,
@@ -382,11 +385,11 @@ export function ReportsPage() {
                       />
                       <YAxis hide />
                       <Tooltip
-                        formatter={(value: number, name: string) => [
-                          formatCurrency(value, currency),
-                          name === 'expenses' ? 'Gastos' : 'Ingresos',
+                        formatter={(value: unknown, name: unknown) => [
+                          formatCurrency(Number(value), currency),
+                          String(name) === 'expenses' ? 'Gastos' : 'Ingresos',
                         ]}
-                        labelFormatter={(label: string) => label}
+                        labelFormatter={(label: unknown) => String(label)}
                         contentStyle={{
                           borderRadius: 8,
                           fontSize: 12,
@@ -597,7 +600,7 @@ function ComparisonChart({
           tickLine={false}
         />
         <Tooltip
-          formatter={(value: number) => formatCurrency(value, currency)}
+          formatter={(value: unknown) => formatCurrency(Number(value), currency)}
           contentStyle={{
             borderRadius: 8,
             fontSize: 12,
