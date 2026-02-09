@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "test": "jest --passWithNoTests",
     "test:ci": "jest --ci --coverage",
+    "test:integration": "jest --config jest.integration.config.ts --passWithNoTests",
     "test:watch": "jest --watch",
     "start:prod": "node dist/index.js",
     "migrate:deploy": "prisma migrate deploy",

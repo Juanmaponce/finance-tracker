@@ -30,7 +30,8 @@
       "Bash(gh auth login:*)",
       "Bash(git remote set-url:*)",
       "Bash(ssh-add:*)",
-      "Bash(openssl rand:*)"
+      "Bash(openssl rand:*)",
+      "Bash(npm run test:ci:*)"
     ]
   }
 }

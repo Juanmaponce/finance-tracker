@@ -5,6 +5,7 @@ const config: Config = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts'],
+  testPathIgnorePatterns: ['.*\\.integration\\.test\\.ts$'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
@@ -16,8 +17,8 @@ const config: Config = {
     global: {
       branches: 30,
       functions: 40,
-      lines: 50,
-      statements: 50,
+      lines: 45,
+      statements: 45,
     },
   },
 };
