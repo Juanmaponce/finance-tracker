@@ -33,7 +33,14 @@ export function SavingsCard({ goal, onDeposit, onDelete }: SavingsCardProps) {
             <DollarSign className={cn('size-4', isComplete ? 'text-income' : 'text-primary-500')} />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">{goal.name}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-medium text-foreground">{goal.name}</p>
+              {!goal.deductFromBalance && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                  No afecta balance
+                </span>
+              )}
+            </div>
             {deadlineStr && (
               <p className="text-[10px] text-muted-foreground">Meta: {deadlineStr}</p>
             )}

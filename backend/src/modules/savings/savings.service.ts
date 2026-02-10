@@ -1,18 +1,31 @@
 import { NotFoundError, ForbiddenError, ValidationError } from '../../lib/errors';
+import { redis } from '../../lib/redis';
 import { savingsRepository } from './savings.repository';
+import { categoryRepository } from '../categories/category.repository';
 
 interface CreateSavingsDTO {
   name: string;
   targetAmount: number;
   currency: string;
   deadline?: string;
+  deductFromBalance?: boolean;
 }
 
 interface UpdateSavingsDTO {
   name?: string;
   targetAmount?: number;
   deadline?: string | null;
+  deductFromBalance?: boolean;
 }
+
+interface DepositDTO {
+  amount: number;
+  note?: string;
+}
+
+const SAVINGS_CATEGORY_NAME = 'Ahorros';
+const SAVINGS_CATEGORY_ICON = 'piggy-bank';
+const SAVINGS_CATEGORY_COLOR = '#10B981';
 
 class SavingsService {
   async list(userId: string) {
@@ -27,6 +40,7 @@ class SavingsService {
       targetAmount: data.targetAmount,
       currency: data.currency,
       deadline: data.deadline ? new Date(data.deadline) : undefined,
+      deductFromBalance: data.deductFromBalance,
     });
     return this.formatGoal(goal);
   }
@@ -42,11 +56,12 @@ class SavingsService {
       ...(data.deadline !== undefined && {
         deadline: data.deadline ? new Date(data.deadline) : null,
       }),
+      ...(data.deductFromBalance !== undefined && { deductFromBalance: data.deductFromBalance }),
     });
     return this.formatGoal(goal);
   }
 
-  async deposit(userId: string, id: string, amount: number) {
+  async deposit(userId: string, id: string, data: DepositDTO) {
     const existing = await savingsRepository.findById(id);
     if (!existing) throw new NotFoundError('Meta de ahorro no encontrada');
     if (existing.userId !== userId) throw new ForbiddenError('Acceso denegado');
@@ -54,14 +69,67 @@ class SavingsService {
     const currentAmount = Number(existing.currentAmount);
     const targetAmount = Number(existing.targetAmount);
 
-    if (currentAmount + amount > targetAmount) {
+    if (currentAmount + data.amount > targetAmount) {
       throw new ValidationError(
         `El deposito excede la meta. Maximo disponible: ${(targetAmount - currentAmount).toFixed(2)}`,
       );
     }
 
-    const goal = await savingsRepository.deposit(id, amount);
+    // Build transaction data only when deposit affects balance
+    let transactionData;
+    if (existing.deductFromBalance) {
+      const categoryId = await this.getOrCreateSavingsCategory(userId);
+      transactionData = {
+        userId,
+        amount: data.amount,
+        currency: existing.currency,
+        categoryId,
+        description: `Ahorro: ${existing.name}`,
+      };
+    }
+
+    const goal = await savingsRepository.deposit(
+      id,
+      data.amount,
+      {
+        savingsGoalId: id,
+        amount: data.amount,
+        currency: existing.currency,
+        note: data.note,
+      },
+      transactionData,
+    );
+
+    // Invalidate dashboard cache when a transaction was created
+    if (transactionData) {
+      try {
+        await redis.del(`dashboard:${userId}`);
+      } catch {
+        // Redis unavailable
+      }
+    }
+
     return this.formatGoal(goal);
+  }
+
+  async getDeposits(userId: string, id: string) {
+    const existing = await savingsRepository.findById(id);
+    if (!existing) throw new NotFoundError('Meta de ahorro no encontrada');
+    if (existing.userId !== userId) throw new ForbiddenError('Acceso denegado');
+
+    const deposits = await savingsRepository.findDepositsByGoalId(id);
+    return deposits.map((d) => ({
+      id: d.id,
+      amount: Number(d.amount),
+      currency: d.currency,
+      note: d.note,
+      date: d.date,
+      createdAt: d.createdAt,
+    }));
+  }
+
+  async getDeductedSavingsTotal(userId: string) {
+    return savingsRepository.getDeductedSavingsTotal(userId);
   }
 
   async delete(userId: string, id: string) {
@@ -72,6 +140,21 @@ class SavingsService {
     await savingsRepository.delete(id);
   }
 
+  private async getOrCreateSavingsCategory(userId: string): Promise<string> {
+    const existing = await categoryRepository.findByUserIdAndName(userId, SAVINGS_CATEGORY_NAME);
+    if (existing) return existing.id;
+
+    const created = await categoryRepository.create({
+      userId,
+      name: SAVINGS_CATEGORY_NAME,
+      icon: SAVINGS_CATEGORY_ICON,
+      color: SAVINGS_CATEGORY_COLOR,
+      type: 'EXPENSE',
+      keywords: ['ahorro', 'savings', 'meta'],
+    });
+    return created.id;
+  }
+
   private formatGoal(g: {
     id: string;
     name: string;
@@ -79,6 +162,7 @@ class SavingsService {
     currentAmount: unknown;
     currency: string;
     deadline: Date | null;
+    deductFromBalance: boolean;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -92,6 +176,7 @@ class SavingsService {
       progress: target > 0 ? Math.round((current / target) * 10000) / 100 : 0,
       currency: g.currency,
       deadline: g.deadline,
+      deductFromBalance: g.deductFromBalance,
       createdAt: g.createdAt,
       updatedAt: g.updatedAt,
     };

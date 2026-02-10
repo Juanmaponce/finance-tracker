@@ -8,11 +8,13 @@ export interface Category {
   keywords: string[];
 }
 
+export type TransactionType = 'EXPENSE' | 'INCOME' | 'TRANSFER_TO_SAVINGS';
+
 export interface Transaction {
   id: string;
   amount: number;
   currency: string;
-  type: 'EXPENSE' | 'INCOME';
+  type: TransactionType;
   description: string | null;
   date: string;
   receiptUrl: string | null;
@@ -30,7 +32,7 @@ export interface CreateTransactionData {
   amount: number;
   currency: string;
   categoryId?: string;
-  type: 'EXPENSE' | 'INCOME';
+  type: TransactionType;
   description?: string;
   date: string;
 }
@@ -39,7 +41,7 @@ export interface UpdateTransactionData {
   amount?: number;
   currency?: string;
   categoryId?: string;
-  type?: 'EXPENSE' | 'INCOME';
+  type?: TransactionType;
   description?: string;
   date?: string;
 }
@@ -47,7 +49,7 @@ export interface UpdateTransactionData {
 export interface TransactionFilters {
   page?: number;
   limit?: number;
-  type?: 'EXPENSE' | 'INCOME';
+  type?: TransactionType;
   categoryId?: string;
   startDate?: string;
   endDate?: string;
@@ -65,6 +67,8 @@ export interface DashboardStats {
   totalExpenses: number;
   totalIncome: number;
   balance: number;
+  savingsDeducted: number;
+  totalSaved: number;
   expensesByCategory: CategoryStats[];
   recentTransactions: Transaction[];
 }
@@ -138,6 +142,7 @@ export interface SavingsGoal {
   progress: number;
   currency: string;
   deadline: string | null;
+  deductFromBalance: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -147,12 +152,23 @@ export interface CreateSavingsData {
   targetAmount: number;
   currency: string;
   deadline?: string;
+  deductFromBalance?: boolean;
 }
 
 export interface UpdateSavingsData {
   name?: string;
   targetAmount?: number;
   deadline?: string | null;
+  deductFromBalance?: boolean;
+}
+
+export interface SavingsDeposit {
+  id: string;
+  amount: number;
+  currency: string;
+  note: string | null;
+  date: string;
+  createdAt: string;
 }
 
 // Reports

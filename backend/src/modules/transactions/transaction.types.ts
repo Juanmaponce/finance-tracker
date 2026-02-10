@@ -58,6 +58,8 @@ export interface DashboardStats {
   totalExpenses: number;
   totalIncome: number;
   balance: number;
+  savingsDeducted: number;
+  totalSaved: number;
   expensesByCategory: CategoryStats[];
   recentTransactions: TransactionResponse[];
 }

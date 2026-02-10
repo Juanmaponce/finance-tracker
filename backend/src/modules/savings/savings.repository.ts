@@ -6,12 +6,29 @@ interface CreateSavingsData {
   targetAmount: number;
   currency: string;
   deadline?: Date;
+  deductFromBalance?: boolean;
 }
 
 interface UpdateSavingsData {
   name?: string;
   targetAmount?: number;
   deadline?: Date | null;
+  deductFromBalance?: boolean;
+}
+
+interface CreateDepositData {
+  savingsGoalId: string;
+  amount: number;
+  currency: string;
+  note?: string;
+}
+
+interface DepositTransactionData {
+  userId: string;
+  amount: number;
+  currency: string;
+  categoryId: string;
+  description: string;
 }
 
 class SavingsRepository {
@@ -37,6 +54,7 @@ class SavingsRepository {
         currentAmount: 0,
         currency: data.currency,
         deadline: data.deadline,
+        deductFromBalance: data.deductFromBalance ?? true,
       },
     });
   }
@@ -48,13 +66,61 @@ class SavingsRepository {
     });
   }
 
-  async deposit(id: string, amount: number) {
-    return prisma.savingsGoal.update({
-      where: { id },
-      data: {
-        currentAmount: { increment: amount },
-      },
+  async deposit(
+    id: string,
+    amount: number,
+    depositData: CreateDepositData,
+    transactionData?: DepositTransactionData,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const goal = await tx.savingsGoal.update({
+        where: { id },
+        data: {
+          currentAmount: { increment: amount },
+        },
+      });
+
+      await tx.savingsDeposit.create({
+        data: {
+          savingsGoalId: depositData.savingsGoalId,
+          amount: depositData.amount,
+          currency: depositData.currency,
+          note: depositData.note,
+        },
+      });
+
+      // Create a TRANSFER_TO_SAVINGS transaction for the history
+      if (transactionData) {
+        await tx.transaction.create({
+          data: {
+            userId: transactionData.userId,
+            amount: transactionData.amount,
+            currency: transactionData.currency,
+            categoryId: transactionData.categoryId,
+            type: 'TRANSFER_TO_SAVINGS',
+            description: transactionData.description,
+            date: new Date(),
+          },
+        });
+      }
+
+      return goal;
     });
+  }
+
+  async findDepositsByGoalId(savingsGoalId: string) {
+    return prisma.savingsDeposit.findMany({
+      where: { savingsGoalId },
+      orderBy: { date: 'desc' },
+    });
+  }
+
+  async getDeductedSavingsTotal(userId: string) {
+    const result = await prisma.savingsGoal.aggregate({
+      where: { userId, deductFromBalance: true },
+      _sum: { currentAmount: true },
+    });
+    return Number(result._sum.currentAmount ?? 0);
   }
 
   async delete(id: string) {

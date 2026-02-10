@@ -7,16 +7,19 @@ const createSchema = z.object({
   targetAmount: z.number().positive('La meta debe ser mayor a cero').max(999999999),
   currency: z.string().length(3),
   deadline: z.string().datetime().optional(),
+  deductFromBalance: z.boolean().optional(),
 });
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   targetAmount: z.number().positive().max(999999999).optional(),
   deadline: z.string().datetime().nullable().optional(),
+  deductFromBalance: z.boolean().optional(),
 });
 
 const depositSchema = z.object({
   amount: z.number().positive('El monto debe ser mayor a cero').max(999999999),
+  note: z.string().max(500).optional(),
 });
 
 const idParamSchema = z.object({
@@ -56,9 +59,19 @@ export async function updateSavings(req: Request, res: Response, next: NextFunct
 export async function depositToSavings(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = idParamSchema.parse(req.params);
-    const { amount } = depositSchema.parse(req.body);
-    const goal = await savingsService.deposit(req.user!.userId, id, amount);
+    const data = depositSchema.parse(req.body);
+    const goal = await savingsService.deposit(req.user!.userId, id, data);
     res.json({ success: true, data: goal });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getDeposits(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = idParamSchema.parse(req.params);
+    const deposits = await savingsService.getDeposits(req.user!.userId, id);
+    res.json({ success: true, data: deposits });
   } catch (error) {
     next(error);
   }

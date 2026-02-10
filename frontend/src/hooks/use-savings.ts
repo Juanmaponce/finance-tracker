@@ -16,6 +16,7 @@ export function useCreateSavings() {
     mutationFn: (data: CreateSavingsData) => savingsService.createSavings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -28,6 +29,7 @@ export function useUpdateSavings() {
       savingsService.updateSavings(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -36,11 +38,20 @@ export function useDepositToSavings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, amount }: { id: string; amount: number }) =>
-      savingsService.depositToSavings(id, amount),
+    mutationFn: ({ id, amount, note }: { id: string; amount: number; note?: string }) =>
+      savingsService.depositToSavings(id, amount, note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
+  });
+}
+
+export function useDeposits(goalId: string | null) {
+  return useQuery({
+    queryKey: ['savings', goalId, 'deposits'],
+    queryFn: () => savingsService.getDeposits(goalId!),
+    enabled: !!goalId,
   });
 }
 
@@ -51,6 +62,7 @@ export function useDeleteSavings() {
     mutationFn: (id: string) => savingsService.deleteSavings(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }

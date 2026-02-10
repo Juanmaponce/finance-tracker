@@ -14,6 +14,8 @@ jest.mock('../lib/prisma', () => ({
     },
     category: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
     },
     refreshToken: {
       create: jest.fn(),
@@ -23,6 +25,18 @@ jest.mock('../lib/prisma', () => ({
     recurringTransaction: {
       findMany: jest.fn(),
       update: jest.fn(),
+    },
+    savingsGoal: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    savingsDeposit: {
+      create: jest.fn(),
+      findMany: jest.fn(),
     },
     $transaction: jest.fn(),
   },

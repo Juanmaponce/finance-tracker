@@ -73,7 +73,7 @@ export function DashboardPage() {
 
         {/* Balance card */}
         <div className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-400 p-6 text-white mb-6">
-          <p className="text-sm opacity-80">Balance del mes</p>
+          <p className="text-sm opacity-80">Balance disponible</p>
           <p className="text-3xl font-bold mt-1">{formatCurrency(stats?.balance ?? 0, currency)}</p>
           <div className="flex justify-between mt-4 text-sm">
             <div>
@@ -89,6 +89,24 @@ export function DashboardPage() {
               </p>
             </div>
           </div>
+          {(stats?.totalSaved ?? 0) > 0 && (
+            <div className="flex justify-between mt-3 pt-3 border-t border-white/20 text-sm">
+              <div>
+                <p className="opacity-70">Total ahorrado</p>
+                <p className="font-semibold text-white">
+                  {formatCurrency(stats?.totalSaved ?? 0, currency)}
+                </p>
+              </div>
+              {(stats?.savingsDeducted ?? 0) > 0 && (
+                <div>
+                  <p className="opacity-70">En ahorros (deducido)</p>
+                  <p className="font-semibold text-white">
+                    -{formatCurrency(stats?.savingsDeducted ?? 0, currency)}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Quick nav */}

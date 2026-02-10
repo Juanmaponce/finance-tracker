@@ -1,6 +1,11 @@
 import { api } from './api';
 import type { ApiResponse } from '@/types/auth';
-import type { SavingsGoal, CreateSavingsData, UpdateSavingsData } from '@/types/transaction';
+import type {
+  SavingsGoal,
+  CreateSavingsData,
+  UpdateSavingsData,
+  SavingsDeposit,
+} from '@/types/transaction';
 
 export async function getSavings(): Promise<SavingsGoal[]> {
   const response = await api.get<ApiResponse<SavingsGoal[]>>('/savings');
@@ -17,8 +22,20 @@ export async function updateSavings(id: string, data: UpdateSavingsData): Promis
   return response.data;
 }
 
-export async function depositToSavings(id: string, amount: number): Promise<SavingsGoal> {
-  const response = await api.post<ApiResponse<SavingsGoal>>(`/savings/${id}/deposit`, { amount });
+export async function depositToSavings(
+  id: string,
+  amount: number,
+  note?: string,
+): Promise<SavingsGoal> {
+  const response = await api.post<ApiResponse<SavingsGoal>>(`/savings/${id}/deposit`, {
+    amount,
+    note,
+  });
+  return response.data;
+}
+
+export async function getDeposits(id: string): Promise<SavingsDeposit[]> {
+  const response = await api.get<ApiResponse<SavingsDeposit[]>>(`/savings/${id}/deposits`);
   return response.data;
 }
 

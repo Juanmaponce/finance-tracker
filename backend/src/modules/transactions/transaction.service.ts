@@ -4,6 +4,7 @@ import { NotFoundError, ForbiddenError } from '../../lib/errors';
 import { transactionRepository } from './transaction.repository';
 import { categoryRepository } from '../categories/category.repository';
 import { currencyService } from '../currency/currency.service';
+import { savingsService } from '../savings/savings.service';
 import type {
   CreateTransactionDTO,
   UpdateTransactionDTO,
@@ -137,6 +138,9 @@ class TransactionService {
     const categoryTotals = new Map<string, CategoryStats>();
 
     for (const t of transactions) {
+      // Skip TRANSFER_TO_SAVINGS from expense/income totals (handled by savingsDeducted)
+      if (t.type === 'TRANSFER_TO_SAVINGS') continue;
+
       const rawAmount = Number(t.amount);
       const amount = this.convertToTarget(rawAmount, t.currency, primaryCurrency, ratesByCurrency);
 
@@ -167,10 +171,22 @@ class TransactionService {
     const recentFilters: TransactionFilters = { userId, page: 1, limit: 10 };
     const recent = await transactionRepository.findMany(recentFilters);
 
+    // Deduct savings that affect balance
+    const savingsDeducted = await savingsService.getDeductedSavingsTotal(userId);
+
+    // Total saved across all goals
+    const allGoals = await prisma.savingsGoal.aggregate({
+      where: { userId },
+      _sum: { currentAmount: true },
+    });
+    const totalSaved = Math.round(Number(allGoals._sum.currentAmount ?? 0) * 100) / 100;
+
     const stats: DashboardStats = {
       totalExpenses: Math.round(totalExpenses * 100) / 100,
       totalIncome: Math.round(totalIncome * 100) / 100,
-      balance: Math.round((totalIncome - totalExpenses) * 100) / 100,
+      balance: Math.round((totalIncome - totalExpenses - savingsDeducted) * 100) / 100,
+      savingsDeducted: Math.round(savingsDeducted * 100) / 100,
+      totalSaved,
       expensesByCategory,
       recentTransactions: recent.map((t) => this.formatTransaction(t)),
     };
@@ -245,7 +261,7 @@ class TransactionService {
     id: string;
     amount: unknown;
     currency: string;
-    type: 'EXPENSE' | 'INCOME';
+    type: 'EXPENSE' | 'INCOME' | 'TRANSFER_TO_SAVINGS';
     description: string | null;
     date: Date;
     receiptUrl?: string | null;

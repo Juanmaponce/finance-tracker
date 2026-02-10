@@ -17,6 +17,7 @@ export function SavingsPage() {
   const [showForm, setShowForm] = useState(false);
   const [depositGoal, setDepositGoal] = useState<SavingsGoal | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
+  const [depositNote, setDepositNote] = useState('');
 
   const { data: goals = [], isLoading } = useSavings();
   const { mutateAsync: deposit, isPending: depositing } = useDepositToSavings();
@@ -43,10 +44,11 @@ export function SavingsPage() {
     }
 
     try {
-      await deposit({ id: depositGoal.id, amount });
+      await deposit({ id: depositGoal.id, amount, note: depositNote || undefined });
       toast.success('Deposito realizado');
       setDepositGoal(null);
       setDepositAmount('');
+      setDepositNote('');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Error al depositar';
       toast.error(message);
@@ -136,6 +138,15 @@ export function SavingsPage() {
                   depositGoal.currency,
                 )}
               </div>
+              {depositGoal.deductFromBalance ? (
+                <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                  Este deposito se restara de tu balance disponible
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                  Este deposito no afectara tu balance disponible
+                </p>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="deposit-amount">Monto</Label>
                 <Input
@@ -147,6 +158,18 @@ export function SavingsPage() {
                   onChange={(e) => setDepositAmount(sanitizeAmount(e.target.value))}
                   className="h-11 text-lg font-semibold"
                   autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="deposit-note">Nota (opcional)</Label>
+                <Input
+                  id="deposit-note"
+                  type="text"
+                  placeholder="Ej: Ahorro del mes"
+                  value={depositNote}
+                  onChange={(e) => setDepositNote(e.target.value)}
+                  maxLength={500}
+                  className="h-11"
                 />
               </div>
               <Button

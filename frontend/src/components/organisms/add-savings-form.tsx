@@ -44,6 +44,7 @@ export function AddSavingsForm({ onSuccess }: AddSavingsFormProps) {
   const [targetAmount, setTargetAmount] = useState('');
   const [currency, setCurrency] = useState(user?.primaryCurrency || 'USD');
   const [deadline, setDeadline] = useState('');
+  const [deductFromBalance, setDeductFromBalance] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
 
@@ -63,6 +64,7 @@ export function AddSavingsForm({ onSuccess }: AddSavingsFormProps) {
         targetAmount: Number(targetAmount),
         currency,
         deadline: deadline ? new Date(deadline + 'T23:59:59Z').toISOString() : undefined,
+        deductFromBalance,
       });
       toast.success('Meta de ahorro creada');
       onSuccess?.();
@@ -137,6 +139,33 @@ export function AddSavingsForm({ onSuccess }: AddSavingsFormProps) {
           onChange={(e) => setDeadline(e.target.value)}
           className="h-11"
         />
+      </div>
+
+      {/* Deduct from balance toggle */}
+      <div className="flex items-center justify-between rounded-xl border border-border p-3">
+        <div className="flex-1 mr-3">
+          <p className="text-sm font-medium text-foreground">Deducir del balance</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Si esta activado, el dinero ahorrado se resta de tu balance disponible
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={deductFromBalance}
+          onClick={() => setDeductFromBalance(!deductFromBalance)}
+          className={cn(
+            'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
+            deductFromBalance ? 'bg-primary-500' : 'bg-muted',
+          )}
+        >
+          <span
+            className={cn(
+              'pointer-events-none inline-block size-5 rounded-full bg-white shadow-sm transition-transform',
+              deductFromBalance ? 'translate-x-5' : 'translate-x-0',
+            )}
+          />
+        </button>
       </div>
 
       <Button

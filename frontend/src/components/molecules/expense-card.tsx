@@ -11,6 +11,17 @@ interface ExpenseCardProps {
 
 export function ExpenseCard({ transaction, onDelete, onClick }: ExpenseCardProps) {
   const isExpense = transaction.type === 'EXPENSE';
+  const isSavingsTransfer = transaction.type === 'TRANSFER_TO_SAVINGS';
+
+  function getAmountColor() {
+    if (isSavingsTransfer) return 'text-primary-500';
+    return isExpense ? 'text-expense' : 'text-income';
+  }
+
+  function getAmountPrefix() {
+    if (isSavingsTransfer) return '-';
+    return isExpense ? '-' : '+';
+  }
 
   return (
     <div
@@ -41,11 +52,11 @@ export function ExpenseCard({ transaction, onDelete, onClick }: ExpenseCardProps
         </p>
       </div>
       <div className="flex items-center gap-2">
-        <p className={`text-sm font-semibold ${isExpense ? 'text-expense' : 'text-income'}`}>
-          {isExpense ? '-' : '+'}
+        <p className={`text-sm font-semibold ${getAmountColor()}`}>
+          {getAmountPrefix()}
           {formatCurrency(transaction.amount, transaction.currency)}
         </p>
-        {onDelete && (
+        {onDelete && !isSavingsTransfer && (
           <button
             onClick={(e) => {
               e.stopPropagation();
