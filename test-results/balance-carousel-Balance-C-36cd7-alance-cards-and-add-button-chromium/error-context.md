@@ -1,0 +1,43 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+    - generic [ref=e4]:
+        - generic [ref=e5]:
+            - generic [ref=e6]:
+                - heading "Hola, E2E Test User" [level=1] [ref=e7]
+                - paragraph [ref=e8]: e2etest@example.com
+            - generic [ref=e9]:
+                - button "Categorias" [ref=e10]:
+                    - img
+                - button "Configuracion" [ref=e11]:
+                    - img
+        - generic [ref=e13]:
+            - generic [ref=e14]:
+                - heading "Balances" [level=2] [ref=e15]
+                - button "Agregar" [ref=e16]:
+                    - img
+                    - text: Agregar
+            - button "Crea tu primera cuenta" [ref=e17]:
+                - img [ref=e18]
+                - paragraph [ref=e19]: Crea tu primera cuenta
+        - generic [ref=e20]:
+            - button "Recurrentes" [ref=e21]:
+                - img [ref=e23]
+                - paragraph [ref=e28]: Recurrentes
+            - button "Ahorros" [ref=e29]:
+                - img [ref=e31]
+                - paragraph [ref=e34]: Ahorros
+            - button "Reportes" [ref=e35]:
+                - img [ref=e37]
+                - paragraph [ref=e39]: Reportes
+        - generic [ref=e40]:
+            - heading "Transacciones recientes" [level=2] [ref=e41]
+            - generic [ref=e43]:
+                - img [ref=e45]
+                - heading "Sin transacciones" [level=3] [ref=e48]
+                - paragraph [ref=e49]: Agrega tu primer gasto o ingreso para empezar a trackear tus finanzas
+                - button "Agregar transaccion" [ref=e50]
+    - button "Agregar transaccion" [ref=e51]:
+        - img [ref=e52]
+```

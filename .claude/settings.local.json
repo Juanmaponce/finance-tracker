@@ -31,7 +31,12 @@
       "Bash(git remote set-url:*)",
       "Bash(ssh-add:*)",
       "Bash(openssl rand:*)",
-      "Bash(npm run test:ci:*)"
+      "Bash(npm run test:ci:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(PGPASSWORD=finance_pass_dev psql:*)",
+      "Bash(docker ps:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
