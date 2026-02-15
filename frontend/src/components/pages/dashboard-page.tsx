@@ -9,9 +9,9 @@ import { TransactionList } from '@/components/organisms/transaction-list';
 import { AddTransactionForm } from '@/components/organisms/add-transaction-form';
 import { CategoryChart } from '@/components/organisms/category-chart';
 import { TransactionDetailDialog } from '@/components/organisms/transaction-detail-dialog';
+import { BalanceCarousel } from '@/components/organisms/balance-carousel';
 import { useDashboardStats, useDeleteTransaction } from '@/hooks/use-transactions';
 import { useAuthStore } from '@/stores/auth.store';
-import { formatCurrency } from '@/utils/format';
 import type { Transaction } from '@/types/transaction';
 
 export function DashboardPage() {
@@ -71,42 +71,9 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* Balance card */}
-        <div className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-400 p-6 text-white mb-6">
-          <p className="text-sm opacity-80">Balance disponible</p>
-          <p className="text-3xl font-bold mt-1">{formatCurrency(stats?.balance ?? 0, currency)}</p>
-          <div className="flex justify-between mt-4 text-sm">
-            <div>
-              <p className="opacity-70">Ingresos</p>
-              <p className="font-semibold text-white">
-                +{formatCurrency(stats?.totalIncome ?? 0, currency)}
-              </p>
-            </div>
-            <div>
-              <p className="opacity-70">Gastos</p>
-              <p className="font-semibold text-white">
-                -{formatCurrency(stats?.totalExpenses ?? 0, currency)}
-              </p>
-            </div>
-          </div>
-          {(stats?.totalSaved ?? 0) > 0 && (
-            <div className="flex justify-between mt-3 pt-3 border-t border-white/20 text-sm">
-              <div>
-                <p className="opacity-70">Total ahorrado</p>
-                <p className="font-semibold text-white">
-                  {formatCurrency(stats?.totalSaved ?? 0, currency)}
-                </p>
-              </div>
-              {(stats?.savingsDeducted ?? 0) > 0 && (
-                <div>
-                  <p className="opacity-70">En ahorros (deducido)</p>
-                  <p className="font-semibold text-white">
-                    -{formatCurrency(stats?.savingsDeducted ?? 0, currency)}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+        {/* Balance carousel */}
+        <div className="mb-6">
+          <BalanceCarousel />
         </div>
 
         {/* Quick nav */}

@@ -2,6 +2,8 @@ import { NotFoundError, ForbiddenError, ValidationError } from '../../lib/errors
 import { redis } from '../../lib/redis';
 import { savingsRepository } from './savings.repository';
 import { categoryRepository } from '../categories/category.repository';
+import { accountService } from '../accounts/account.service';
+import { accountRepository } from '../accounts/account.repository';
 
 interface CreateSavingsDTO {
   name: string;
@@ -9,6 +11,7 @@ interface CreateSavingsDTO {
   currency: string;
   deadline?: string;
   deductFromBalance?: boolean;
+  defaultAccountId?: string;
 }
 
 interface UpdateSavingsDTO {
@@ -16,11 +19,13 @@ interface UpdateSavingsDTO {
   targetAmount?: number;
   deadline?: string | null;
   deductFromBalance?: boolean;
+  defaultAccountId?: string | null;
 }
 
 interface DepositDTO {
   amount: number;
   note?: string;
+  accountId?: string;
 }
 
 const SAVINGS_CATEGORY_NAME = 'Ahorros';
@@ -34,6 +39,10 @@ class SavingsService {
   }
 
   async create(userId: string, data: CreateSavingsDTO) {
+    if (data.defaultAccountId) {
+      await this.validateAccountForGoal(userId, data.defaultAccountId, data.currency);
+    }
+
     const goal = await savingsRepository.create({
       userId,
       name: data.name,
@@ -41,6 +50,7 @@ class SavingsService {
       currency: data.currency,
       deadline: data.deadline ? new Date(data.deadline) : undefined,
       deductFromBalance: data.deductFromBalance,
+      defaultAccountId: data.defaultAccountId,
     });
     return this.formatGoal(goal);
   }
@@ -50,6 +60,10 @@ class SavingsService {
     if (!existing) throw new NotFoundError('Meta de ahorro no encontrada');
     if (existing.userId !== userId) throw new ForbiddenError('Acceso denegado');
 
+    if (data.defaultAccountId) {
+      await this.validateAccountForGoal(userId, data.defaultAccountId, existing.currency);
+    }
+
     const goal = await savingsRepository.update(id, {
       ...(data.name && { name: data.name }),
       ...(data.targetAmount !== undefined && { targetAmount: data.targetAmount }),
@@ -57,6 +71,7 @@ class SavingsService {
         deadline: data.deadline ? new Date(data.deadline) : null,
       }),
       ...(data.deductFromBalance !== undefined && { deductFromBalance: data.deductFromBalance }),
+      ...(data.defaultAccountId !== undefined && { defaultAccountId: data.defaultAccountId }),
     });
     return this.formatGoal(goal);
   }
@@ -75,12 +90,28 @@ class SavingsService {
       );
     }
 
+    // Determine the account to deduct from
+    const resolvedAccountId = data.accountId || existing.defaultAccountId || undefined;
+
     // Build transaction data only when deposit affects balance
     let transactionData;
     if (existing.deductFromBalance) {
+      let accountId: string | undefined = resolvedAccountId;
+
+      if (accountId) {
+        // Validate selected account
+        await this.validateAccountForGoal(userId, accountId, existing.currency);
+        await this.validateAccountBalance(userId, accountId, data.amount);
+      } else {
+        // Fall back to default account
+        const defaultAccount = await accountService.getDefaultAccount(userId);
+        accountId = defaultAccount?.id;
+      }
+
       const categoryId = await this.getOrCreateSavingsCategory(userId);
       transactionData = {
         userId,
+        accountId,
         amount: data.amount,
         currency: existing.currency,
         categoryId,
@@ -96,6 +127,7 @@ class SavingsService {
         amount: data.amount,
         currency: existing.currency,
         note: data.note,
+        accountId: resolvedAccountId || transactionData?.accountId,
       },
       transactionData,
     );
@@ -125,7 +157,34 @@ class SavingsService {
       note: d.note,
       date: d.date,
       createdAt: d.createdAt,
+      account: d.account || null,
     }));
+  }
+
+  async getAvailableAccounts(userId: string, id: string) {
+    const existing = await savingsRepository.findById(id);
+    if (!existing) throw new NotFoundError('Meta de ahorro no encontrada');
+    if (existing.userId !== userId) throw new ForbiddenError('Acceso denegado');
+
+    const accounts = await accountRepository.findByUserId(userId);
+    const matchingAccounts = accounts.filter((a) => a.currency === existing.currency);
+
+    const result = await Promise.all(
+      matchingAccounts.map(async (account) => {
+        const balance = await this.getAccountBalance(account.id);
+        return {
+          id: account.id,
+          name: account.name,
+          currency: account.currency,
+          icon: account.icon,
+          color: account.color,
+          isDefault: account.isDefault,
+          availableBalance: balance,
+        };
+      }),
+    );
+
+    return result;
   }
 
   async getDeductedSavingsTotal(userId: string) {
@@ -138,6 +197,34 @@ class SavingsService {
     if (existing.userId !== userId) throw new ForbiddenError('Acceso denegado');
 
     await savingsRepository.delete(id);
+  }
+
+  private async validateAccountForGoal(userId: string, accountId: string, currency: string) {
+    const account = await accountRepository.findById(accountId);
+    if (!account) throw new NotFoundError('Cuenta no encontrada');
+    if (account.userId !== userId) throw new ForbiddenError('Acceso denegado');
+    if (account.currency !== currency) {
+      throw new ValidationError(
+        `La cuenta debe ser en ${currency}. La cuenta seleccionada es en ${account.currency}`,
+      );
+    }
+  }
+
+  private async validateAccountBalance(userId: string, accountId: string, amount: number) {
+    const balance = await this.getAccountBalance(accountId);
+    if (balance < amount) {
+      throw new ValidationError(`Balance insuficiente. Disponible: ${balance.toFixed(2)}`);
+    }
+  }
+
+  private async getAccountBalance(accountId: string): Promise<number> {
+    const stats = await accountRepository.getTransactionStatsByAccount(accountId);
+    const totalIncome = Number(stats.find((s) => s.type === 'INCOME')?._sum.amount ?? 0);
+    const totalExpenses = Number(stats.find((s) => s.type === 'EXPENSE')?._sum.amount ?? 0);
+    const transferToSavings = Number(
+      stats.find((s) => s.type === 'TRANSFER_TO_SAVINGS')?._sum.amount ?? 0,
+    );
+    return Math.round((totalIncome - totalExpenses - transferToSavings) * 100) / 100;
   }
 
   private async getOrCreateSavingsCategory(userId: string): Promise<string> {
@@ -163,6 +250,14 @@ class SavingsService {
     currency: string;
     deadline: Date | null;
     deductFromBalance: boolean;
+    defaultAccountId: string | null;
+    defaultAccount?: {
+      id: string;
+      name: string;
+      currency: string;
+      icon: string | null;
+      color: string;
+    } | null;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -177,6 +272,8 @@ class SavingsService {
       currency: g.currency,
       deadline: g.deadline,
       deductFromBalance: g.deductFromBalance,
+      defaultAccountId: g.defaultAccountId,
+      defaultAccount: g.defaultAccount || null,
       createdAt: g.createdAt,
       updatedAt: g.updatedAt,
     };

@@ -5,6 +5,7 @@ import { transactionRepository } from './transaction.repository';
 import { categoryRepository } from '../categories/category.repository';
 import { currencyService } from '../currency/currency.service';
 import { savingsService } from '../savings/savings.service';
+import { accountService } from '../accounts/account.service';
 import type {
   CreateTransactionDTO,
   UpdateTransactionDTO,
@@ -35,8 +36,16 @@ class TransactionService {
       );
     }
 
+    // Auto-assign default account if not provided
+    let accountId = data.accountId;
+    if (!accountId) {
+      const defaultAccount = await accountService.getDefaultAccount(userId);
+      accountId = defaultAccount?.id;
+    }
+
     const transaction = await transactionRepository.create({
       userId,
+      accountId,
       amount: data.amount,
       currency: data.currency,
       categoryId,
@@ -84,6 +93,7 @@ class TransactionService {
       ...(data.amount !== undefined && { amount: data.amount }),
       ...(data.currency && { currency: data.currency }),
       ...(data.categoryId && { categoryId: data.categoryId }),
+      ...(data.accountId && { accountId: data.accountId }),
       ...(data.type && { type: data.type }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.date && { date: new Date(data.date) }),

@@ -145,6 +145,15 @@
   --color-ring: var(--ring);
 }
 
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    scrollbar-width: none;
+  }
+}
+
 @layer base {
   *,
   *::before,

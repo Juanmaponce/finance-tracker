@@ -5,6 +5,7 @@ import type {
   CreateSavingsData,
   UpdateSavingsData,
   SavingsDeposit,
+  AvailableAccount,
 } from '@/types/transaction';
 
 export async function getSavings(): Promise<SavingsGoal[]> {
@@ -26,16 +27,25 @@ export async function depositToSavings(
   id: string,
   amount: number,
   note?: string,
+  accountId?: string,
 ): Promise<SavingsGoal> {
   const response = await api.post<ApiResponse<SavingsGoal>>(`/savings/${id}/deposit`, {
     amount,
     note,
+    accountId,
   });
   return response.data;
 }
 
 export async function getDeposits(id: string): Promise<SavingsDeposit[]> {
   const response = await api.get<ApiResponse<SavingsDeposit[]>>(`/savings/${id}/deposits`);
+  return response.data;
+}
+
+export async function getAvailableAccounts(goalId: string): Promise<AvailableAccount[]> {
+  const response = await api.get<ApiResponse<AvailableAccount[]>>(
+    `/savings/${goalId}/available-accounts`,
+  );
   return response.data;
 }
 

@@ -4,6 +4,7 @@ export interface CreateTransactionDTO {
   amount: number;
   currency: string;
   categoryId?: string;
+  accountId?: string;
   type: TransactionType;
   description?: string;
   date: string;
@@ -13,6 +14,7 @@ export interface UpdateTransactionDTO {
   amount?: number;
   currency?: string;
   categoryId?: string;
+  accountId?: string;
   type?: TransactionType;
   description?: string;
   date?: string;

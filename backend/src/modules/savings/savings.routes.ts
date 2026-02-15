@@ -11,6 +11,7 @@ router.post('/', savingsController.createSavings);
 router.put('/:id', savingsController.updateSavings);
 router.post('/:id/deposit', savingsController.depositToSavings);
 router.get('/:id/deposits', savingsController.getDeposits);
+router.get('/:id/available-accounts', savingsController.getAvailableAccounts);
 router.delete('/:id', savingsController.deleteSavings);
 
 export default router;

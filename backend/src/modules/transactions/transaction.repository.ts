@@ -48,6 +48,7 @@ class TransactionRepository {
 
   async create(data: {
     userId: string;
+    accountId?: string;
     amount: number;
     currency: string;
     categoryId: string;
@@ -58,6 +59,7 @@ class TransactionRepository {
     return prisma.transaction.create({
       data: {
         userId: data.userId,
+        accountId: data.accountId,
         amount: data.amount,
         currency: data.currency,
         categoryId: data.categoryId,

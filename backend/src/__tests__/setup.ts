@@ -38,6 +38,17 @@ jest.mock('../lib/prisma', () => ({
       create: jest.fn(),
       findMany: jest.fn(),
     },
+    account: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+      delete: jest.fn(),
+      aggregate: jest.fn(),
+      count: jest.fn(),
+    },
     $transaction: jest.fn(),
   },
 }));

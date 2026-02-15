@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/atoms/field-error';
 import { CategoryIcon } from '@/components/atoms/category-icon';
 import { useCategories, useCreateTransaction } from '@/hooks/use-transactions';
+import { useAccounts } from '@/hooks/use-accounts';
 import { useAuthStore } from '@/stores/auth.store';
 import { sanitizeAmount } from '@/utils/format';
 import { cn } from '@/lib/utils';
@@ -54,12 +55,23 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
   const [currency, setCurrency] = useState(user?.primaryCurrency || 'USD');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState<string | undefined>();
+  const [accountId, setAccountId] = useState<string | undefined>();
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
 
   const { data: categories = [], isLoading: loadingCategories } = useCategories(type);
+  const { data: accounts = [] } = useAccounts();
   const { mutateAsync: create, isPending } = useCreateTransaction();
+
+  // Auto-select default account on first load
+  useEffect(() => {
+    if (!accountId && accounts.length > 0) {
+      const defaultAcc = accounts.find((a) => a.isDefault) ?? accounts[0];
+      setAccountId(defaultAcc.id);
+      setCurrency(defaultAcc.currency);
+    }
+  }, [accounts, accountId]);
 
   function handleAmountChange(value: string) {
     const sanitized = sanitizeAmount(value);
@@ -81,6 +93,7 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
         currency,
         type,
         categoryId,
+        accountId,
         description: description.trim() || undefined,
         date: new Date(date + 'T12:00:00Z').toISOString(),
       });
@@ -127,6 +140,32 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
           Ingreso
         </button>
       </div>
+
+      {/* Account selector */}
+      {accounts.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="account">Cuenta</Label>
+          <select
+            id="account"
+            value={accountId ?? ''}
+            onChange={(e) => {
+              const acc = accounts.find((a) => a.id === e.target.value);
+              if (acc) {
+                setAccountId(acc.id);
+                setCurrency(acc.currency);
+              }
+            }}
+            className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
+            aria-label="Cuenta"
+          >
+            {accounts.map((acc) => (
+              <option key={acc.id} value={acc.id} className="bg-card text-card-foreground">
+                {acc.name} ({acc.currency})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Amount + Currency */}
       <div className="space-y-2">

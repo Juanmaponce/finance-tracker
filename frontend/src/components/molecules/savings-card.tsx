@@ -90,6 +90,19 @@ export function SavingsCard({ goal, onDeposit, onDelete }: SavingsCardProps) {
           {formatCurrency(goal.targetAmount, goal.currency)}
         </span>
       </div>
+
+      {/* Default account badge */}
+      {goal.defaultAccount && (
+        <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border">
+          <div
+            className="size-2 rounded-full shrink-0"
+            style={{ backgroundColor: goal.defaultAccount.color }}
+          />
+          <p className="text-[10px] text-muted-foreground truncate">
+            Cuenta: {goal.defaultAccount.name}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

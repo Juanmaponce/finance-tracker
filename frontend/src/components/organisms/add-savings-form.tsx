@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/atoms/field-error';
 import { useCreateSavings } from '@/hooks/use-savings';
+import { useAccounts } from '@/hooks/use-accounts';
 import { useAuthStore } from '@/stores/auth.store';
 import { sanitizeAmount } from '@/utils/format';
 import { cn } from '@/lib/utils';
@@ -45,10 +46,13 @@ export function AddSavingsForm({ onSuccess }: AddSavingsFormProps) {
   const [currency, setCurrency] = useState(user?.primaryCurrency || 'USD');
   const [deadline, setDeadline] = useState('');
   const [deductFromBalance, setDeductFromBalance] = useState(true);
+  const [defaultAccountId, setDefaultAccountId] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
 
   const { mutateAsync: create, isPending } = useCreateSavings();
+  const { data: accounts = [] } = useAccounts();
+  const matchingAccounts = accounts.filter((a) => a.currency === currency);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,6 +69,7 @@ export function AddSavingsForm({ onSuccess }: AddSavingsFormProps) {
         currency,
         deadline: deadline ? new Date(deadline + 'T23:59:59Z').toISOString() : undefined,
         deductFromBalance,
+        defaultAccountId: defaultAccountId || undefined,
       });
       toast.success('Meta de ahorro creada');
       onSuccess?.();
@@ -167,6 +172,30 @@ export function AddSavingsForm({ onSuccess }: AddSavingsFormProps) {
           />
         </button>
       </div>
+
+      {/* Default account selector (only when deductFromBalance is on and accounts exist) */}
+      {deductFromBalance && matchingAccounts.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="sav-default-account">Cuenta por defecto (opcional)</Label>
+          <select
+            id="sav-default-account"
+            value={defaultAccountId}
+            onChange={(e) => setDefaultAccountId(e.target.value)}
+            className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">Seleccionar cada vez</option>
+            {matchingAccounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.icon ? `${a.icon} ` : ''}
+                {a.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            Se usara esta cuenta para deducir los depositos
+          </p>
+        </div>
+      )}
 
       <Button
         type="submit"

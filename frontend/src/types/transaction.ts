@@ -32,9 +32,42 @@ export interface CreateTransactionData {
   amount: number;
   currency: string;
   categoryId?: string;
+  accountId?: string;
   type: TransactionType;
   description?: string;
   date: string;
+}
+
+// Accounts
+export interface Account {
+  id: string;
+  userId: string;
+  name: string;
+  currency: string;
+  icon: string | null;
+  color: string;
+  isDefault: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AccountBalance {
+  accountId: string;
+  account: Account;
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  totalSaved: number;
+}
+
+export interface CreateAccountData {
+  name: string;
+  currency: string;
+  icon?: string;
+  color?: string;
 }
 
 export interface UpdateTransactionData {
@@ -134,6 +167,14 @@ export interface UpdateRecurringData {
 }
 
 // Savings goals
+export interface AccountSummary {
+  id: string;
+  name: string;
+  currency: string;
+  icon: string | null;
+  color: string;
+}
+
 export interface SavingsGoal {
   id: string;
   name: string;
@@ -143,6 +184,8 @@ export interface SavingsGoal {
   currency: string;
   deadline: string | null;
   deductFromBalance: boolean;
+  defaultAccountId: string | null;
+  defaultAccount: AccountSummary | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -153,6 +196,7 @@ export interface CreateSavingsData {
   currency: string;
   deadline?: string;
   deductFromBalance?: boolean;
+  defaultAccountId?: string;
 }
 
 export interface UpdateSavingsData {
@@ -160,6 +204,7 @@ export interface UpdateSavingsData {
   targetAmount?: number;
   deadline?: string | null;
   deductFromBalance?: boolean;
+  defaultAccountId?: string | null;
 }
 
 export interface SavingsDeposit {
@@ -169,6 +214,17 @@ export interface SavingsDeposit {
   note: string | null;
   date: string;
   createdAt: string;
+  account: AccountSummary | null;
+}
+
+export interface AvailableAccount {
+  id: string;
+  name: string;
+  currency: string;
+  icon: string | null;
+  color: string;
+  isDefault: boolean;
+  availableBalance: number;
 }
 
 // Reports

@@ -12,6 +12,7 @@ import recurringRoutes from './modules/recurring/recurring.routes';
 import savingsRoutes from './modules/savings/savings.routes';
 import reportRoutes from './modules/reports/report.routes';
 import receiptRoutes from './modules/receipts/receipt.routes';
+import accountRoutes from './modules/accounts/account.routes';
 import userRoutes from './modules/users/user.routes';
 
 export function createApp() {
@@ -39,6 +40,7 @@ export function createApp() {
   app.use('/api/v1/savings', savingsRoutes);
   app.use('/api/v1/reports', reportRoutes);
   app.use('/api/v1/receipts', receiptRoutes);
+  app.use('/api/v1/accounts', accountRoutes);
   app.use('/api/v1/users', userRoutes);
 
   // Serve local uploads in development

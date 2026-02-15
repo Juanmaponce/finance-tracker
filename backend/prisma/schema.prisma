@@ -26,9 +26,36 @@ model User {
   savingsGoals          SavingsGoal[]
   recurringTransactions RecurringTransaction[]
   refreshTokens         RefreshToken[]
+  accounts              Account[]
 
   @@index([email])
   @@map("users")
+}
+
+// ============================================
+// Accounts (Multi-currency balances)
+// ============================================
+model Account {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  name      String   @db.VarChar(100)
+  currency  String   @db.Char(3)
+  icon      String?  @db.VarChar(50)
+  color     String   @default("#00B9AE") @db.Char(7)
+  isDefault Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  savingsGoalsAsDefault SavingsGoal[]
+  savingsDeposits       SavingsDeposit[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([userId, isDefault])
+  @@map("accounts")
 }
 
 // ============================================
@@ -77,6 +104,7 @@ model Category {
 model Transaction {
   id          String          @id @default(uuid()) @db.Uuid
   userId      String          @db.Uuid
+  accountId   String?         @db.Uuid
   amount      Decimal         @db.Decimal(15, 2)
   currency    String          @db.Char(3)
   categoryId  String          @db.Uuid
@@ -91,10 +119,12 @@ model Transaction {
   deletedAt   DateTime?       @db.Timestamptz
 
   user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account   Account?              @relation(fields: [accountId], references: [id], onDelete: Restrict)
   category  Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   recurring RecurringTransaction? @relation(fields: [recurringId], references: [id])
 
   @@index([userId, date])
+  @@index([accountId])
   @@index([categoryId])
   @@index([deletedAt])
   @@index([userId, type])
@@ -137,19 +167,23 @@ model SavingsGoal {
   currency          String    @db.Char(3)
   deadline          DateTime? @db.Timestamptz
   deductFromBalance Boolean   @default(true)
+  defaultAccountId  String?   @db.Uuid
   createdAt         DateTime  @default(now()) @db.Timestamptz
   updatedAt         DateTime  @updatedAt @db.Timestamptz
 
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deposits SavingsDeposit[]
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultAccount Account?         @relation(fields: [defaultAccountId], references: [id], onDelete: SetNull)
+  deposits       SavingsDeposit[]
 
   @@index([userId])
+  @@index([defaultAccountId])
   @@map("savings_goals")
 }
 
 model SavingsDeposit {
   id            String   @id @default(uuid()) @db.Uuid
   savingsGoalId String   @db.Uuid
+  accountId     String?  @db.Uuid
   amount        Decimal  @db.Decimal(15, 2)
   currency      String   @db.Char(3)
   note          String?  @db.Text
@@ -157,8 +191,10 @@ model SavingsDeposit {
   createdAt     DateTime @default(now()) @db.Timestamptz
 
   savingsGoal SavingsGoal @relation(fields: [savingsGoalId], references: [id], onDelete: Cascade)
+  account     Account?    @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([savingsGoalId])
+  @@index([accountId])
   @@map("savings_deposits")
 }
 

@@ -38,12 +38,30 @@ export function useDepositToSavings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, amount, note }: { id: string; amount: number; note?: string }) =>
-      savingsService.depositToSavings(id, amount, note),
+    mutationFn: ({
+      id,
+      amount,
+      note,
+      accountId,
+    }: {
+      id: string;
+      amount: number;
+      note?: string;
+      accountId?: string;
+    }) => savingsService.depositToSavings(id, amount, note, accountId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savings'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['account-balances'] });
     },
+  });
+}
+
+export function useAvailableAccounts(goalId: string | null) {
+  return useQuery({
+    queryKey: ['savings', goalId, 'available-accounts'],
+    queryFn: () => savingsService.getAvailableAccounts(goalId!),
+    enabled: !!goalId,
   });
 }
 

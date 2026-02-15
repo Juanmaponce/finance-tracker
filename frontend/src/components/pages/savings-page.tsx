@@ -8,8 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SavingsList } from '@/components/organisms/savings-list';
 import { AddSavingsForm } from '@/components/organisms/add-savings-form';
-import { useSavings, useDepositToSavings, useDeleteSavings } from '@/hooks/use-savings';
+import {
+  useSavings,
+  useDepositToSavings,
+  useDeleteSavings,
+  useAvailableAccounts,
+} from '@/hooks/use-savings';
 import { formatCurrency, sanitizeAmount } from '@/utils/format';
+import { cn } from '@/lib/utils';
 import type { SavingsGoal } from '@/types/transaction';
 
 export function SavingsPage() {
@@ -18,10 +24,14 @@ export function SavingsPage() {
   const [depositGoal, setDepositGoal] = useState<SavingsGoal | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositNote, setDepositNote] = useState('');
+  const [depositAccountId, setDepositAccountId] = useState('');
 
   const { data: goals = [], isLoading } = useSavings();
   const { mutateAsync: deposit, isPending: depositing } = useDepositToSavings();
   const { mutate: remove } = useDeleteSavings();
+
+  const depositGoalId = depositGoal?.deductFromBalance ? depositGoal.id : null;
+  const { data: availableAccounts = [] } = useAvailableAccounts(depositGoalId);
 
   const totalSaved = goals.reduce((acc, g) => acc + g.currentAmount, 0);
 
@@ -44,11 +54,17 @@ export function SavingsPage() {
     }
 
     try {
-      await deposit({ id: depositGoal.id, amount, note: depositNote || undefined });
+      await deposit({
+        id: depositGoal.id,
+        amount,
+        note: depositNote || undefined,
+        accountId: depositAccountId || undefined,
+      });
       toast.success('Deposito realizado');
       setDepositGoal(null);
       setDepositAmount('');
       setDepositNote('');
+      setDepositAccountId('');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Error al depositar';
       toast.error(message);
@@ -92,6 +108,8 @@ export function SavingsPage() {
             onDeposit={(g) => {
               setDepositGoal(g);
               setDepositAmount('');
+              setDepositNote('');
+              setDepositAccountId(g.defaultAccountId || '');
             }}
             onDelete={handleDelete}
             onAddFirst={() => setShowForm(true)}
@@ -139,9 +157,50 @@ export function SavingsPage() {
                 )}
               </div>
               {depositGoal.deductFromBalance ? (
-                <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-                  Este deposito se restara de tu balance disponible
-                </p>
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                    Este deposito se restara de tu balance disponible
+                  </p>
+                  {availableAccounts.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="deposit-account">Cuenta origen</Label>
+                      <select
+                        id="deposit-account"
+                        value={depositAccountId}
+                        onChange={(e) => setDepositAccountId(e.target.value)}
+                        className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">Cuenta por defecto</option>
+                        {availableAccounts.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.icon ? `${a.icon} ` : ''}
+                            {a.name} ({formatCurrency(a.availableBalance, a.currency)})
+                          </option>
+                        ))}
+                      </select>
+                      {depositAccountId &&
+                        (() => {
+                          const selected = availableAccounts.find((a) => a.id === depositAccountId);
+                          if (!selected) return null;
+                          const depositNum = Number(depositAmount) || 0;
+                          const remaining = selected.availableBalance - depositNum;
+                          return (
+                            <p
+                              className={cn(
+                                'text-xs px-1',
+                                remaining < 0 ? 'text-destructive' : 'text-muted-foreground',
+                              )}
+                            >
+                              Disponible:{' '}
+                              {formatCurrency(selected.availableBalance, selected.currency)}
+                              {depositNum > 0 &&
+                                ` → ${formatCurrency(remaining, selected.currency)}`}
+                            </p>
+                          );
+                        })()}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
                   Este deposito no afectara tu balance disponible
@@ -174,7 +233,14 @@ export function SavingsPage() {
               </div>
               <Button
                 type="submit"
-                disabled={depositing}
+                disabled={
+                  depositing ||
+                  (!!depositAccountId &&
+                    (() => {
+                      const sel = availableAccounts.find((a) => a.id === depositAccountId);
+                      return sel ? sel.availableBalance < (Number(depositAmount) || 0) : false;
+                    })())
+                }
                 className="w-full h-11 bg-income hover:bg-income/90 text-white rounded-xl font-medium"
               >
                 {depositing ? 'Depositando...' : 'Depositar'}

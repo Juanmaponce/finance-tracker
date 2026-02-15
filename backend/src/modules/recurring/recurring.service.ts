@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma';
 import { redis } from '../../lib/redis';
 import { NotFoundError, ForbiddenError } from '../../lib/errors';
 import { recurringRepository } from './recurring.repository';
+import { accountService } from '../accounts/account.service';
 import { logger } from '../../lib/logger';
 import type { Frequency } from '@prisma/client';
 
@@ -86,10 +87,14 @@ class RecurringService {
         });
         const txType = category?.type === 'INCOME' ? 'INCOME' : 'EXPENSE';
 
+        // Find default account for this user
+        const defaultAccount = await accountService.getDefaultAccount(template.userId);
+
         await prisma.$transaction(async (tx) => {
           await tx.transaction.create({
             data: {
               userId: template.userId,
+              accountId: defaultAccount?.id,
               amount: template.amount,
               currency: template.currency,
               categoryId: template.categoryId,

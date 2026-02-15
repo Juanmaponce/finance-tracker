@@ -8,6 +8,7 @@ const createSchema = z.object({
   currency: z.string().length(3),
   deadline: z.string().datetime().optional(),
   deductFromBalance: z.boolean().optional(),
+  defaultAccountId: z.string().uuid().optional(),
 });
 
 const updateSchema = z.object({
@@ -15,11 +16,13 @@ const updateSchema = z.object({
   targetAmount: z.number().positive().max(999999999).optional(),
   deadline: z.string().datetime().nullable().optional(),
   deductFromBalance: z.boolean().optional(),
+  defaultAccountId: z.string().uuid().nullable().optional(),
 });
 
 const depositSchema = z.object({
   amount: z.number().positive('El monto debe ser mayor a cero').max(999999999),
   note: z.string().max(500).optional(),
+  accountId: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({
@@ -72,6 +75,16 @@ export async function getDeposits(req: Request, res: Response, next: NextFunctio
     const { id } = idParamSchema.parse(req.params);
     const deposits = await savingsService.getDeposits(req.user!.userId, id);
     res.json({ success: true, data: deposits });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getAvailableAccounts(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = idParamSchema.parse(req.params);
+    const accounts = await savingsService.getAvailableAccounts(req.user!.userId, id);
+    res.json({ success: true, data: accounts });
   } catch (error) {
     next(error);
   }
