@@ -14,6 +14,7 @@ import reportRoutes from './modules/reports/report.routes';
 import receiptRoutes from './modules/receipts/receipt.routes';
 import accountRoutes from './modules/accounts/account.routes';
 import userRoutes from './modules/users/user.routes';
+import widgetRoutes from './modules/widgets/widget.routes';
 
 export function createApp() {
   const app = express();
@@ -42,6 +43,7 @@ export function createApp() {
   app.use('/api/v1/receipts', receiptRoutes);
   app.use('/api/v1/accounts', accountRoutes);
   app.use('/api/v1/users', userRoutes);
+  app.use('/api/v1/widgets', widgetRoutes);
 
   // Serve local uploads in development
   if (config.nodeEnv === 'development') {

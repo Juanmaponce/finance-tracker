@@ -22,6 +22,7 @@ export default defineConfig({
         scope: '/',
         start_url: '/',
         categories: ['finance', 'productivity'],
+        lang: 'en',
         icons: [
           {
             src: '/pwa-192x192.png',
@@ -38,6 +39,28 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
+          },
+        ],
+        // @ts-expect-error -- PWA widgets spec not yet in vite-plugin-pwa types
+        widgets: [
+          {
+            name: 'monthly-summary',
+            short_name: 'Resumen',
+            description: 'Resumen mensual de gastos e ingresos',
+            tag: 'monthly',
+            template: 'monthly-summary',
+            ms_ac_template: '/widgets/monthly-summary.json',
+            data: '/api/v1/widgets/monthly-summary',
+            type: 'application/json',
+            screenshots: [
+              {
+                src: '/widget-preview.png',
+                sizes: '540x282',
+                label: 'Monthly summary widget preview',
+              },
+            ],
+            auth: true,
+            update: 900,
           },
         ],
       },

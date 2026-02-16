@@ -76,8 +76,8 @@ export function BalanceCarousel() {
           <Skeleton className="h-8 w-20" />
         </div>
         <div className="flex gap-3 overflow-hidden">
-          <Skeleton className="min-w-[85%] h-48 rounded-xl flex-shrink-0" />
-          <Skeleton className="min-w-[85%] h-48 rounded-xl flex-shrink-0" />
+          <Skeleton className="min-w-[75%] h-48 rounded-xl flex-shrink-0" />
+          <Skeleton className="min-w-[75%] h-48 rounded-xl flex-shrink-0" />
         </div>
       </div>
     );
@@ -138,7 +138,7 @@ export function BalanceCarousel() {
             {balances?.map((balance) => (
               <div
                 key={balance.accountId}
-                className="min-w-[85%] sm:min-w-[60%] md:min-w-[45%] flex-shrink-0"
+                className="min-w-[75%] sm:min-w-[60%] md:min-w-[45%] flex-shrink-0"
                 style={{ scrollSnapAlign: 'start' }}
               >
                 <BalanceCard balance={balance} />
@@ -149,7 +149,7 @@ export function BalanceCarousel() {
             {activeSavings.map((goal) => (
               <div
                 key={goal.id}
-                className="min-w-[85%] sm:min-w-[60%] md:min-w-[45%] flex-shrink-0"
+                className="min-w-[75%] sm:min-w-[60%] md:min-w-[45%] flex-shrink-0"
                 style={{ scrollSnapAlign: 'start' }}
               >
                 <SavingsGoalCarouselCard goal={goal} />
@@ -158,7 +158,7 @@ export function BalanceCarousel() {
 
             {/* Add account placeholder */}
             <div
-              className="min-w-[85%] sm:min-w-[60%] md:min-w-[45%] flex-shrink-0"
+              className="min-w-[75%] sm:min-w-[60%] md:min-w-[45%] flex-shrink-0"
               style={{ scrollSnapAlign: 'start' }}
             >
               <button

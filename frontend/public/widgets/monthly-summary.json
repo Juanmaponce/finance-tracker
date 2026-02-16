@@ -1,0 +1,102 @@
+{
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "${month}",
+          "size": "small",
+          "weight": "bolder",
+          "isSubtle": true
+        },
+        {
+          "type": "TextBlock",
+          "text": "${if(balance >= 0, '+', '')}${formatNumber(balance, 2)} ${currency}",
+          "size": "extraLarge",
+          "weight": "bolder",
+          "color": "${if(balance >= 0, 'good', 'attention')}"
+        },
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Gastos",
+                  "size": "small",
+                  "isSubtle": true
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "-${formatNumber(totalExpenses, 2)} ${currency}",
+                  "color": "attention",
+                  "weight": "bolder"
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Ingresos",
+                  "size": "small",
+                  "isSubtle": true
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "+${formatNumber(totalIncome, 2)} ${currency}",
+                  "color": "good",
+                  "weight": "bolder"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "ColumnSet",
+          "separator": true,
+          "columns": [
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Top categor\u00eda",
+                  "size": "small",
+                  "isSubtle": true
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "${topCategory.name}",
+                  "weight": "bolder"
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "auto",
+              "verticalContentAlignment": "bottom",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "${formatNumber(topCategory.amount, 2)} ${currency}",
+                  "size": "small",
+                  "isSubtle": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -36,7 +36,13 @@
       "Bash(docker exec:*)",
       "Bash(PGPASSWORD=finance_pass_dev psql:*)",
       "Bash(docker ps:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(for module in accounts auth categories currency receipts recurring reports savings transactions users)",
+      "Bash(do echo \"=== $module module ===\" ls -1 /Users/juanmanuelponce/code-projects/finance-tracker/backend/src/modules/$module/*.ts)",
+      "Bash(xargs:*)",
+      "Bash(done)"
     ]
   }
 }
