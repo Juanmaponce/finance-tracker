@@ -9,10 +9,10 @@ import type {
   Transaction,
 } from '@/types/transaction';
 
-export function useDashboardStats() {
+export function useDashboardStats(accountId?: string) {
   return useQuery({
-    queryKey: ['dashboard-stats'],
-    queryFn: transactionService.getDashboardStats,
+    queryKey: ['dashboard-stats', accountId ?? 'all'],
+    queryFn: () => transactionService.getDashboardStats(accountId),
   });
 }
 
