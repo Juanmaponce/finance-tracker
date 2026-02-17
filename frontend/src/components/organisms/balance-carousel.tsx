@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,7 +22,10 @@ export function BalanceCarousel() {
   const { data: savingsGoals, isLoading: loadingSavings } = useSavings();
   const setSelection = useCarouselSelectionStore((s) => s.setSelection);
 
-  const activeSavings = savingsGoals?.filter((g) => g.progress < 100) ?? [];
+  const activeSavings = useMemo(
+    () => savingsGoals?.filter((g) => g.progress < 100) ?? [],
+    [savingsGoals],
+  );
   const totalCards = 1 + (balances?.length ?? 0) + activeSavings.length + 1;
 
   // Check scroll boundaries and active card
@@ -64,24 +67,31 @@ export function BalanceCarousel() {
   }, [balances, savingsGoals]);
 
   // Sync active card index to the carousel selection store
-  useEffect(() => {
-    const accountCount = balances?.length ?? 0;
+  const syncSelection = useCallback(
+    (index: number) => {
+      const accountCount = balances?.length ?? 0;
 
-    if (activeIndex === 0) {
-      setSelection({ type: 'all' });
-    } else if (activeIndex <= accountCount) {
-      const account = balances?.[activeIndex - 1];
-      if (account) {
-        setSelection({ type: 'account', accountId: account.accountId });
+      if (index === 0) {
+        setSelection({ type: 'all' });
+      } else if (index <= accountCount) {
+        const account = balances?.[index - 1];
+        if (account) {
+          setSelection({ type: 'account', accountId: account.accountId });
+        }
+      } else {
+        const savingsIndex = index - accountCount - 1;
+        const goal = activeSavings[savingsIndex];
+        if (goal) {
+          setSelection({ type: 'savings', goalId: goal.id });
+        }
       }
-    } else {
-      const savingsIndex = activeIndex - accountCount - 1;
-      const goal = activeSavings[savingsIndex];
-      if (goal) {
-        setSelection({ type: 'savings', goalId: goal.id });
-      }
-    }
-  }, [activeIndex, balances, activeSavings, setSelection]);
+    },
+    [balances, activeSavings, setSelection],
+  );
+
+  useEffect(() => {
+    syncSelection(activeIndex);
+  }, [activeIndex, syncSelection]);
 
   function scrollToCard(index: number) {
     const el = scrollRef.current;
