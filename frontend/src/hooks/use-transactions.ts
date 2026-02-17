@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import * as transactionService from '@/services/transaction.service';
 import * as categoryService from '@/services/category.service';
 import type {
@@ -13,6 +13,7 @@ export function useDashboardStats(accountId?: string) {
   return useQuery({
     queryKey: ['dashboard-stats', accountId ?? 'all'],
     queryFn: () => transactionService.getDashboardStats(accountId),
+    placeholderData: keepPreviousData,
   });
 }
 
