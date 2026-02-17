@@ -13,6 +13,7 @@ class TransactionRepository {
       deletedAt: null,
       ...(filters.type && { type: filters.type }),
       ...(filters.categoryId && { categoryId: filters.categoryId }),
+      ...(filters.accountId && { accountId: filters.accountId }),
       ...((filters.startDate || filters.endDate) && {
         date: {
           ...(filters.startDate && { gte: new Date(filters.startDate) }),
@@ -86,12 +87,13 @@ class TransactionRepository {
     });
   }
 
-  async getStats(userId: string, startDate: Date, endDate: Date) {
+  async getStats(userId: string, startDate: Date, endDate: Date, accountId?: string) {
     const transactions = await prisma.transaction.findMany({
       where: {
         userId,
         deletedAt: null,
         date: { gte: startDate, lte: endDate },
+        ...(accountId && { accountId }),
       },
       include: { category: categorySelect },
     });

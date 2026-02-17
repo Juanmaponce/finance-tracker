@@ -26,6 +26,7 @@ export interface TransactionFilters {
   limit: number;
   type?: TransactionType;
   categoryId?: string;
+  accountId?: string;
   startDate?: string;
   endDate?: string;
 }
@@ -60,6 +61,7 @@ export interface DashboardStats {
   totalExpenses: number;
   totalIncome: number;
   balance: number;
+  allTimeBalance: number;
   savingsDeducted: number;
   totalSaved: number;
   expensesByCategory: CategoryStats[];

@@ -2,6 +2,7 @@ import { transactionRepository } from '../transaction.repository';
 import { categoryRepository } from '../../categories/category.repository';
 import { currencyService } from '../../currency/currency.service';
 import { savingsService } from '../../savings/savings.service';
+import { accountService } from '../../accounts/account.service';
 import { redis } from '../../../lib/redis';
 import { prisma } from '../../../lib/prisma';
 
@@ -9,6 +10,7 @@ jest.mock('../transaction.repository');
 jest.mock('../../categories/category.repository');
 jest.mock('../../currency/currency.service');
 jest.mock('../../savings/savings.service');
+jest.mock('../../accounts/account.service');
 
 // Import after mocks
 import { transactionService } from '../transaction.service';
@@ -241,6 +243,7 @@ describe('TransactionService', () => {
     it('should calculate stats from transactions when cache misses', async () => {
       (redis.get as jest.Mock).mockResolvedValueOnce(null);
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ primaryCurrency: 'USD' });
+      (accountService.getAllBalances as jest.Mock).mockResolvedValueOnce([]);
       (savingsService.getDeductedSavingsTotal as jest.Mock).mockResolvedValueOnce(0);
       (prisma.savingsGoal.aggregate as jest.Mock).mockResolvedValueOnce({
         _sum: { currentAmount: 0 },
@@ -271,6 +274,80 @@ describe('TransactionService', () => {
       expect(result.totalExpenses).toBe(100);
       expect(result.totalIncome).toBe(200);
       expect(result.balance).toBe(100);
+    });
+
+    it('should pass accountId to repository when provided', async () => {
+      const userId = 'user-1';
+      const accountId = 'account-1';
+
+      (redis.get as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ primaryCurrency: 'USD' });
+      (accountService.getAllBalances as jest.Mock).mockResolvedValueOnce([]);
+      (savingsService.getDeductedSavingsTotal as jest.Mock).mockResolvedValueOnce(0);
+      (prisma.savingsGoal.aggregate as jest.Mock).mockResolvedValueOnce({
+        _sum: { currentAmount: 0 },
+      });
+      mockTransactionRepo.getStats.mockResolvedValue([] as never);
+      mockTransactionRepo.findMany.mockResolvedValue([]);
+
+      await transactionService.getDashboardStats(userId, accountId);
+
+      expect(mockTransactionRepo.getStats).toHaveBeenCalledWith(
+        userId,
+        expect.any(Date),
+        expect.any(Date),
+        accountId,
+      );
+      expect(mockTransactionRepo.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ accountId }),
+      );
+    });
+
+    it('should not pass accountId to repository when not provided', async () => {
+      const userId = 'user-1';
+
+      (redis.get as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ primaryCurrency: 'USD' });
+      (accountService.getAllBalances as jest.Mock).mockResolvedValueOnce([]);
+      (savingsService.getDeductedSavingsTotal as jest.Mock).mockResolvedValueOnce(0);
+      (prisma.savingsGoal.aggregate as jest.Mock).mockResolvedValueOnce({
+        _sum: { currentAmount: 0 },
+      });
+      mockTransactionRepo.getStats.mockResolvedValue([] as never);
+      mockTransactionRepo.findMany.mockResolvedValue([]);
+
+      await transactionService.getDashboardStats(userId);
+
+      expect(mockTransactionRepo.getStats).toHaveBeenCalledWith(
+        userId,
+        expect.any(Date),
+        expect.any(Date),
+        undefined,
+      );
+    });
+
+    it('should include accountId in cache key', async () => {
+      const userId = 'user-1';
+      const accountId = 'account-1';
+
+      (redis.get as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ primaryCurrency: 'USD' });
+      (accountService.getAllBalances as jest.Mock).mockResolvedValueOnce([]);
+      (savingsService.getDeductedSavingsTotal as jest.Mock).mockResolvedValueOnce(0);
+      (prisma.savingsGoal.aggregate as jest.Mock).mockResolvedValueOnce({
+        _sum: { currentAmount: 0 },
+      });
+      mockTransactionRepo.getStats.mockResolvedValue([] as never);
+      mockTransactionRepo.findMany.mockResolvedValue([]);
+
+      await transactionService.getDashboardStats(userId, accountId);
+
+      expect(redis.set).toHaveBeenCalledWith(
+        `dashboard:${userId}:${accountId}`,
+        expect.any(String),
+        'EX',
+        expect.any(Number),
+      );
     });
   });
 });

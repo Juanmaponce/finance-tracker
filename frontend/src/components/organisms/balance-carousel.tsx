@@ -1,12 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BalanceCard } from '@/components/molecules/balance-card';
+import { AllAccountsCard } from '@/components/molecules/all-accounts-card';
 import { SavingsGoalCarouselCard } from '@/components/molecules/savings-goal-carousel-card';
 import { AddAccountModal } from '@/components/organisms/add-account-modal';
 import { useAccountBalances } from '@/hooks/use-accounts';
 import { useSavings } from '@/hooks/use-savings';
+import { useCarouselSelectionStore } from '@/stores/carousel-selection.store';
 import { cn } from '@/lib/utils';
 
 export function BalanceCarousel() {
@@ -18,9 +20,13 @@ export function BalanceCarousel() {
 
   const { data: balances, isLoading: loadingBalances } = useAccountBalances();
   const { data: savingsGoals, isLoading: loadingSavings } = useSavings();
+  const setSelection = useCarouselSelectionStore((s) => s.setSelection);
 
-  const activeSavings = savingsGoals?.filter((g) => g.progress < 100) ?? [];
-  const totalCards = (balances?.length ?? 0) + activeSavings.length + 1;
+  const activeSavings = useMemo(
+    () => savingsGoals?.filter((g) => g.progress < 100) ?? [],
+    [savingsGoals],
+  );
+  const totalCards = 1 + (balances?.length ?? 0) + activeSavings.length + 1;
 
   // Check scroll boundaries and active card
   function syncScrollState() {
@@ -59,6 +65,33 @@ export function BalanceCarousel() {
       window.removeEventListener('resize', syncScrollState);
     };
   }, [balances, savingsGoals]);
+
+  // Sync active card index to the carousel selection store
+  const syncSelection = useCallback(
+    (index: number) => {
+      const accountCount = balances?.length ?? 0;
+
+      if (index === 0) {
+        setSelection({ type: 'all' });
+      } else if (index <= accountCount) {
+        const account = balances?.[index - 1];
+        if (account) {
+          setSelection({ type: 'account', accountId: account.accountId });
+        }
+      } else {
+        const savingsIndex = index - accountCount - 1;
+        const goal = activeSavings[savingsIndex];
+        if (goal) {
+          setSelection({ type: 'savings', goalId: goal.id });
+        }
+      }
+    },
+    [balances, activeSavings, setSelection],
+  );
+
+  useEffect(() => {
+    syncSelection(activeIndex);
+  }, [activeIndex, syncSelection]);
 
   function scrollToCard(index: number) {
     const el = scrollRef.current;
@@ -134,6 +167,14 @@ export function BalanceCarousel() {
               WebkitOverflowScrolling: 'touch',
             }}
           >
+            {/* All accounts card */}
+            <div
+              className="min-w-[75%] sm:min-w-[60%] md:min-w-[45%] flex-shrink-0"
+              style={{ scrollSnapAlign: 'start' }}
+            >
+              <AllAccountsCard />
+            </div>
+
             {/* Account balance cards */}
             {balances?.map((balance) => (
               <div

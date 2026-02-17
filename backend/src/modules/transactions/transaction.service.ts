@@ -112,8 +112,8 @@ class TransactionService {
     await this.invalidateCache(userId);
   }
 
-  async getDashboardStats(userId: string): Promise<DashboardStats> {
-    const cacheKey = `dashboard:${userId}`;
+  async getDashboardStats(userId: string, accountId?: string): Promise<DashboardStats> {
+    const cacheKey = `dashboard:${userId}:${accountId || 'all'}`;
 
     try {
       const cached = await redis.get(cacheKey);
@@ -132,10 +132,21 @@ class TransactionService {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    const transactions = await transactionRepository.getStats(userId, startOfMonth, endOfMonth);
+    const transactions = await transactionRepository.getStats(
+      userId,
+      startOfMonth,
+      endOfMonth,
+      accountId,
+    );
 
-    // Collect unique currencies to fetch rates only once per currency
+    // All-time balances per account (needed for allTimeBalance)
+    const accountBalances = await accountService.getAllBalances(userId);
+
+    // Collect unique currencies from transactions and accounts
     const uniqueCurrencies = new Set(transactions.map((t) => t.currency));
+    for (const ab of accountBalances) {
+      uniqueCurrencies.add(ab.account.currency);
+    }
     const ratesByCurrency: Record<string, Record<string, number>> = {};
     for (const curr of uniqueCurrencies) {
       if (curr !== primaryCurrency) {
@@ -178,8 +189,16 @@ class TransactionService {
     );
 
     // Get recent 10 transactions (already sorted by date desc in repo)
-    const recentFilters: TransactionFilters = { userId, page: 1, limit: 10 };
+    const recentFilters: TransactionFilters = {
+      userId,
+      page: 1,
+      limit: 10,
+      ...(accountId && { accountId }),
+    };
     const recent = await transactionRepository.findMany(recentFilters);
+
+    // Note: savingsDeducted and totalSaved are user-scoped, not account-scoped.
+    // Savings goals are account-agnostic in the current data model.
 
     // Deduct savings that affect balance
     const savingsDeducted = await savingsService.getDeductedSavingsTotal(userId);
@@ -191,10 +210,23 @@ class TransactionService {
     });
     const totalSaved = Math.round(Number(allGoals._sum.currentAmount ?? 0) * 100) / 100;
 
+    // All-time balance across all accounts, converted to primary currency
+    let allTimeBalance = 0;
+    for (const ab of accountBalances) {
+      const converted = this.convertToTarget(
+        ab.balance,
+        ab.account.currency,
+        primaryCurrency,
+        ratesByCurrency,
+      );
+      allTimeBalance += converted;
+    }
+
     const stats: DashboardStats = {
       totalExpenses: Math.round(totalExpenses * 100) / 100,
       totalIncome: Math.round(totalIncome * 100) / 100,
       balance: Math.round((totalIncome - totalExpenses - savingsDeducted) * 100) / 100,
+      allTimeBalance: Math.round(allTimeBalance * 100) / 100,
       savingsDeducted: Math.round(savingsDeducted * 100) / 100,
       totalSaved,
       expensesByCategory,
@@ -261,7 +293,10 @@ class TransactionService {
 
   private async invalidateCache(userId: string) {
     try {
-      await redis.del(`dashboard:${userId}`);
+      const keys = await redis.keys(`dashboard:${userId}:*`);
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
     } catch {
       // Redis unavailable
     }

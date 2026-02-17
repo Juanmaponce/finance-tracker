@@ -35,6 +35,10 @@ const idParamSchema = z.object({
   id: z.string().uuid('Invalid transaction ID'),
 });
 
+const dashboardQuerySchema = z.object({
+  accountId: z.string().uuid().optional(),
+});
+
 export async function createTransaction(req: Request, res: Response, next: NextFunction) {
   try {
     const validated = createSchema.parse(req.body);
@@ -93,8 +97,8 @@ export async function deleteTransaction(req: Request, res: Response, next: NextF
 
 export async function getDashboardStats(req: Request, res: Response, next: NextFunction) {
   try {
-    const stats = await transactionService.getDashboardStats(req.user!.userId);
-
+    const { accountId } = dashboardQuerySchema.parse(req.query);
+    const stats = await transactionService.getDashboardStats(req.user!.userId, accountId);
     res.json({ success: true, data: stats });
   } catch (error) {
     next(error);

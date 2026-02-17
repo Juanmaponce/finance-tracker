@@ -10,8 +10,11 @@ import { AddTransactionForm } from '@/components/organisms/add-transaction-form'
 import { CategoryChart } from '@/components/organisms/category-chart';
 import { TransactionDetailDialog } from '@/components/organisms/transaction-detail-dialog';
 import { BalanceCarousel } from '@/components/organisms/balance-carousel';
+import { SavingsDepositList } from '@/components/molecules/savings-deposit-list';
 import { useDashboardStats, useDeleteTransaction } from '@/hooks/use-transactions';
+import { useDeposits } from '@/hooks/use-savings';
 import { useAuthStore } from '@/stores/auth.store';
+import { useCarouselSelectionStore } from '@/stores/carousel-selection.store';
 import type { Transaction } from '@/types/transaction';
 
 export function DashboardPage() {
@@ -20,7 +23,13 @@ export function DashboardPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-  const { data: stats, isLoading } = useDashboardStats();
+  const selection = useCarouselSelectionStore((s) => s.selection);
+  const accountId = selection.type === 'account' ? selection.accountId : undefined;
+
+  const { data: stats, isLoading } = useDashboardStats(accountId);
+  const { data: deposits, isLoading: loadingDeposits } = useDeposits(
+    selection.type === 'savings' ? selection.goalId : null,
+  );
   const { mutate: deleteTransaction } = useDeleteTransaction();
 
   function handleDelete(id: string) {
@@ -108,7 +117,7 @@ export function DashboardPage() {
         </div>
 
         {/* Category chart */}
-        {stats && stats.expensesByCategory.length > 0 && (
+        {selection.type !== 'savings' && stats && stats.expensesByCategory.length > 0 && (
           <div className="mb-6">
             <h2 className="text-sm font-semibold text-foreground mb-3">Gastos por categoria</h2>
             <div className="rounded-xl bg-card p-4 border border-border">
@@ -119,15 +128,21 @@ export function DashboardPage() {
 
         {/* Recent transactions */}
         <div>
-          <h2 className="text-sm font-semibold text-foreground mb-3">Transacciones recientes</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">
+            {selection.type === 'savings' ? 'Depositos' : 'Transacciones recientes'}
+          </h2>
           <div className="rounded-xl bg-card p-4 border border-border">
-            <TransactionList
-              transactions={stats?.recentTransactions ?? []}
-              isLoading={false}
-              onDelete={handleDelete}
-              onAddFirst={() => setShowAddForm(true)}
-              onTransactionClick={setSelectedTransaction}
-            />
+            {selection.type === 'savings' ? (
+              <SavingsDepositList deposits={deposits ?? []} isLoading={loadingDeposits} />
+            ) : (
+              <TransactionList
+                transactions={stats?.recentTransactions ?? []}
+                isLoading={isLoading}
+                onDelete={handleDelete}
+                onAddFirst={() => setShowAddForm(true)}
+                onTransactionClick={setSelectedTransaction}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -9,8 +9,9 @@ import type {
   TransactionFilters,
 } from '@/types/transaction';
 
-export async function getDashboardStats(): Promise<DashboardStats> {
-  const response = await api.get<ApiResponse<DashboardStats>>('/transactions/dashboard');
+export async function getDashboardStats(accountId?: string): Promise<DashboardStats> {
+  const params = accountId ? `?accountId=${accountId}` : '';
+  const response = await api.get<ApiResponse<DashboardStats>>(`/transactions/dashboard${params}`);
   return response.data;
 }
 
