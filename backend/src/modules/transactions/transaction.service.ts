@@ -139,8 +139,14 @@ class TransactionService {
       accountId,
     );
 
-    // Collect unique currencies to fetch rates only once per currency
+    // All-time balances per account (needed for allTimeBalance)
+    const accountBalances = await accountService.getAllBalances(userId);
+
+    // Collect unique currencies from transactions and accounts
     const uniqueCurrencies = new Set(transactions.map((t) => t.currency));
+    for (const ab of accountBalances) {
+      uniqueCurrencies.add(ab.account.currency);
+    }
     const ratesByCurrency: Record<string, Record<string, number>> = {};
     for (const curr of uniqueCurrencies) {
       if (curr !== primaryCurrency) {
@@ -204,10 +210,23 @@ class TransactionService {
     });
     const totalSaved = Math.round(Number(allGoals._sum.currentAmount ?? 0) * 100) / 100;
 
+    // All-time balance across all accounts, converted to primary currency
+    let allTimeBalance = 0;
+    for (const ab of accountBalances) {
+      const converted = this.convertToTarget(
+        ab.balance,
+        ab.account.currency,
+        primaryCurrency,
+        ratesByCurrency,
+      );
+      allTimeBalance += converted;
+    }
+
     const stats: DashboardStats = {
       totalExpenses: Math.round(totalExpenses * 100) / 100,
       totalIncome: Math.round(totalIncome * 100) / 100,
       balance: Math.round((totalIncome - totalExpenses - savingsDeducted) * 100) / 100,
+      allTimeBalance: Math.round(allTimeBalance * 100) / 100,
       savingsDeducted: Math.round(savingsDeducted * 100) / 100,
       totalSaved,
       expensesByCategory,

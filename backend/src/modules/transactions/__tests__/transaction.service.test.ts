@@ -2,6 +2,7 @@ import { transactionRepository } from '../transaction.repository';
 import { categoryRepository } from '../../categories/category.repository';
 import { currencyService } from '../../currency/currency.service';
 import { savingsService } from '../../savings/savings.service';
+import { accountService } from '../../accounts/account.service';
 import { redis } from '../../../lib/redis';
 import { prisma } from '../../../lib/prisma';
 
@@ -9,6 +10,7 @@ jest.mock('../transaction.repository');
 jest.mock('../../categories/category.repository');
 jest.mock('../../currency/currency.service');
 jest.mock('../../savings/savings.service');
+jest.mock('../../accounts/account.service');
 
 // Import after mocks
 import { transactionService } from '../transaction.service';
@@ -241,6 +243,7 @@ describe('TransactionService', () => {
     it('should calculate stats from transactions when cache misses', async () => {
       (redis.get as jest.Mock).mockResolvedValueOnce(null);
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ primaryCurrency: 'USD' });
+      (accountService.getAllBalances as jest.Mock).mockResolvedValueOnce([]);
       (savingsService.getDeductedSavingsTotal as jest.Mock).mockResolvedValueOnce(0);
       (prisma.savingsGoal.aggregate as jest.Mock).mockResolvedValueOnce({
         _sum: { currentAmount: 0 },
@@ -279,6 +282,7 @@ describe('TransactionService', () => {
 
       (redis.get as jest.Mock).mockResolvedValueOnce(null);
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ primaryCurrency: 'USD' });
+      (accountService.getAllBalances as jest.Mock).mockResolvedValueOnce([]);
       (savingsService.getDeductedSavingsTotal as jest.Mock).mockResolvedValueOnce(0);
       (prisma.savingsGoal.aggregate as jest.Mock).mockResolvedValueOnce({
         _sum: { currentAmount: 0 },
@@ -304,6 +308,7 @@ describe('TransactionService', () => {
 
       (redis.get as jest.Mock).mockResolvedValueOnce(null);
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ primaryCurrency: 'USD' });
+      (accountService.getAllBalances as jest.Mock).mockResolvedValueOnce([]);
       (savingsService.getDeductedSavingsTotal as jest.Mock).mockResolvedValueOnce(0);
       (prisma.savingsGoal.aggregate as jest.Mock).mockResolvedValueOnce({
         _sum: { currentAmount: 0 },
@@ -327,6 +332,7 @@ describe('TransactionService', () => {
 
       (redis.get as jest.Mock).mockResolvedValueOnce(null);
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({ primaryCurrency: 'USD' });
+      (accountService.getAllBalances as jest.Mock).mockResolvedValueOnce([]);
       (savingsService.getDeductedSavingsTotal as jest.Mock).mockResolvedValueOnce(0);
       (prisma.savingsGoal.aggregate as jest.Mock).mockResolvedValueOnce({
         _sum: { currentAmount: 0 },

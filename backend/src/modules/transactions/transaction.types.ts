@@ -61,6 +61,7 @@ export interface DashboardStats {
   totalExpenses: number;
   totalIncome: number;
   balance: number;
+  allTimeBalance: number;
   savingsDeducted: number;
   totalSaved: number;
   expensesByCategory: CategoryStats[];

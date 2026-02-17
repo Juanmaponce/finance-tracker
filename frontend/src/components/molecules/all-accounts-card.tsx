@@ -8,7 +8,7 @@ export function AllAccountsCard() {
   const currency = user?.primaryCurrency || 'USD';
   const { data: stats } = useDashboardStats();
 
-  const totalBalance = stats?.balance ?? 0;
+  const totalBalance = stats?.allTimeBalance ?? 0;
   const totalIncome = stats?.totalIncome ?? 0;
   const totalExpenses = stats?.totalExpenses ?? 0;
 
