@@ -26,7 +26,7 @@ export function DashboardPage() {
   const selection = useCarouselSelectionStore((s) => s.selection);
   const accountId = selection.type === 'account' ? selection.accountId : undefined;
 
-  const { data: stats, isLoading } = useDashboardStats(accountId);
+  const { data: stats, isLoading, isFetching } = useDashboardStats(accountId);
   const { data: deposits, isLoading: loadingDeposits } = useDeposits(
     selection.type === 'savings' ? selection.goalId : null,
   );
@@ -41,7 +41,7 @@ export function DashboardPage() {
 
   const currency = user?.primaryCurrency || 'USD';
 
-  if (isLoading) {
+  if (isLoading && !stats) {
     return (
       <div className="min-h-dvh bg-background">
         <div className="mx-auto max-w-md px-4 py-6">
@@ -137,7 +137,7 @@ export function DashboardPage() {
             ) : (
               <TransactionList
                 transactions={stats?.recentTransactions ?? []}
-                isLoading={isLoading}
+                isLoading={isFetching && !stats}
                 onDelete={handleDelete}
                 onAddFirst={() => setShowAddForm(true)}
                 onTransactionClick={setSelectedTransaction}
