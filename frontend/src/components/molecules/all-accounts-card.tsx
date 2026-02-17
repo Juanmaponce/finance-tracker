@@ -1,19 +1,16 @@
 import { Layers } from 'lucide-react';
 import { formatCurrency } from '@/utils/format';
-import type { AccountBalance } from '@/types/transaction';
 import { useAuthStore } from '@/stores/auth.store';
+import { useDashboardStats } from '@/hooks/use-transactions';
 
-interface AllAccountsCardProps {
-  balances: AccountBalance[];
-}
-
-export function AllAccountsCard({ balances }: AllAccountsCardProps) {
+export function AllAccountsCard() {
   const { user } = useAuthStore();
   const currency = user?.primaryCurrency || 'USD';
+  const { data: stats } = useDashboardStats();
 
-  const totalBalance = balances.reduce((sum, b) => sum + b.balance, 0);
-  const totalIncome = balances.reduce((sum, b) => sum + b.monthlyIncome, 0);
-  const totalExpenses = balances.reduce((sum, b) => sum + b.monthlyExpenses, 0);
+  const totalBalance = stats?.balance ?? 0;
+  const totalIncome = stats?.totalIncome ?? 0;
+  const totalExpenses = stats?.totalExpenses ?? 0;
 
   return (
     <div className="h-full flex flex-col rounded-xl bg-card border border-border p-4 hover:shadow-md transition-shadow border-t-[3px] border-t-primary-500">

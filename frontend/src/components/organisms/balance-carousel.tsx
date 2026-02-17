@@ -172,7 +172,7 @@ export function BalanceCarousel() {
               className="min-w-[75%] sm:min-w-[60%] md:min-w-[45%] flex-shrink-0"
               style={{ scrollSnapAlign: 'start' }}
             >
-              <AllAccountsCard balances={balances ?? []} />
+              <AllAccountsCard />
             </div>
 
             {/* Account balance cards */}
