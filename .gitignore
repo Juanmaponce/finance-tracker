@@ -12,3 +12,4 @@ coverage/
 .railway/
 prisma/*.db
 prisma/migrations/**/migration_lock.toml
+.claude/settings.local.json
