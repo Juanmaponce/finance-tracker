@@ -26,6 +26,7 @@ export interface TransactionFilters {
   limit: number;
   type?: TransactionType;
   categoryId?: string;
+  accountId?: string;
   startDate?: string;
   endDate?: string;
 }
