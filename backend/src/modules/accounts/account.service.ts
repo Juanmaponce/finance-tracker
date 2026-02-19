@@ -94,6 +94,16 @@ class AccountService {
     return accountRepository.findDefault(userId);
   }
 
+  async getAvailableBalance(accountId: string): Promise<number> {
+    const stats = await accountRepository.getTransactionStatsByAccount(accountId);
+    const totalIncome = Number(stats.find((s) => s.type === 'INCOME')?._sum.amount ?? 0);
+    const totalExpenses = Number(stats.find((s) => s.type === 'EXPENSE')?._sum.amount ?? 0);
+    const transferToSavings = Number(
+      stats.find((s) => s.type === 'TRANSFER_TO_SAVINGS')?._sum.amount ?? 0,
+    );
+    return Math.round((totalIncome - totalExpenses - transferToSavings) * 100) / 100;
+  }
+
   private async calculateBalance(account: AccountResponse): Promise<AccountBalance> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

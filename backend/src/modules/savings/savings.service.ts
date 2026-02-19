@@ -171,7 +171,7 @@ class SavingsService {
 
     const result = await Promise.all(
       matchingAccounts.map(async (account) => {
-        const balance = await this.getAccountBalance(account.id);
+        const balance = await accountService.getAvailableBalance(account.id);
         return {
           id: account.id,
           name: account.name,
@@ -211,20 +211,10 @@ class SavingsService {
   }
 
   private async validateAccountBalance(userId: string, accountId: string, amount: number) {
-    const balance = await this.getAccountBalance(accountId);
+    const balance = await accountService.getAvailableBalance(accountId);
     if (balance < amount) {
       throw new ValidationError(`Balance insuficiente. Disponible: ${balance.toFixed(2)}`);
     }
-  }
-
-  private async getAccountBalance(accountId: string): Promise<number> {
-    const stats = await accountRepository.getTransactionStatsByAccount(accountId);
-    const totalIncome = Number(stats.find((s) => s.type === 'INCOME')?._sum.amount ?? 0);
-    const totalExpenses = Number(stats.find((s) => s.type === 'EXPENSE')?._sum.amount ?? 0);
-    const transferToSavings = Number(
-      stats.find((s) => s.type === 'TRANSFER_TO_SAVINGS')?._sum.amount ?? 0,
-    );
-    return Math.round((totalIncome - totalExpenses - transferToSavings) * 100) / 100;
   }
 
   private async getOrCreateSavingsCategory(userId: string): Promise<string> {

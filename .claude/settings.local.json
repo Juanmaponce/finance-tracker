@@ -42,7 +42,9 @@
       "Bash(for module in accounts auth categories currency receipts recurring reports savings transactions users)",
       "Bash(do echo \"=== $module module ===\" ls -1 /Users/juanmanuelponce/code-projects/finance-tracker/backend/src/modules/$module/*.ts)",
       "Bash(xargs:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

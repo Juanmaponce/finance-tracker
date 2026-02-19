@@ -1,6 +1,6 @@
 import { redis } from '../../lib/redis';
 import { prisma } from '../../lib/prisma';
-import { NotFoundError, ForbiddenError } from '../../lib/errors';
+import { NotFoundError, ForbiddenError, ValidationError } from '../../lib/errors';
 import { transactionRepository } from './transaction.repository';
 import { categoryRepository } from '../categories/category.repository';
 import { currencyService } from '../currency/currency.service';
@@ -41,6 +41,15 @@ class TransactionService {
     if (!accountId) {
       const defaultAccount = await accountService.getDefaultAccount(userId);
       accountId = defaultAccount?.id;
+    }
+
+    if (accountId && (data.type === 'EXPENSE' || data.type === 'TRANSFER_TO_SAVINGS')) {
+      const balance = await accountService.getAvailableBalance(accountId);
+      if (data.amount > balance) {
+        throw new ValidationError(
+          `Balance insuficiente. Disponible: ${balance.toFixed(2)} ${data.currency}`,
+        );
+      }
     }
 
     const transaction = await transactionRepository.create({
@@ -88,6 +97,31 @@ class TransactionService {
     const existing = await transactionRepository.findById(id);
     if (!existing) throw new NotFoundError('Transaction not found');
     if (existing.userId !== userId) throw new ForbiddenError('Access denied');
+
+    const effectiveType = data.type || existing.type;
+    const effectiveAmount = data.amount ?? Number(existing.amount);
+    const effectiveAccountId = data.accountId || existing.accountId;
+
+    if (
+      effectiveAccountId &&
+      (effectiveType === 'EXPENSE' || effectiveType === 'TRANSFER_TO_SAVINGS')
+    ) {
+      const balance = await accountService.getAvailableBalance(effectiveAccountId);
+      // Add back the existing debit since it's already counted in the balance
+      const existingDebit =
+        (existing.type === 'EXPENSE' || existing.type === 'TRANSFER_TO_SAVINGS') &&
+        existing.accountId === effectiveAccountId
+          ? Number(existing.amount)
+          : 0;
+      const availableForUpdate = balance + existingDebit;
+
+      if (effectiveAmount > availableForUpdate) {
+        const currency = data.currency || existing.currency;
+        throw new ValidationError(
+          `Balance insuficiente. Disponible: ${availableForUpdate.toFixed(2)} ${currency}`,
+        );
+      }
+    }
 
     const transaction = await transactionRepository.update(id, {
       ...(data.amount !== undefined && { amount: data.amount }),

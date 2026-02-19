@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { FieldError } from '@/components/atoms/field-error';
 import { CategoryIcon } from '@/components/atoms/category-icon';
 import { useCategories, useCreateTransaction } from '@/hooks/use-transactions';
-import { useAccounts } from '@/hooks/use-accounts';
+import { useAccounts, useAccountBalances } from '@/hooks/use-accounts';
 import { useAuthStore } from '@/stores/auth.store';
 import { sanitizeAmount } from '@/utils/format';
 import { cn } from '@/lib/utils';
@@ -32,13 +32,24 @@ interface FieldErrors {
   description?: string[];
 }
 
-function validate(amount: string): FieldErrors {
+function validate(
+  amount: string,
+  type: 'EXPENSE' | 'INCOME',
+  availableBalance?: number,
+): FieldErrors {
   const errors: FieldErrors = {};
 
   const amountErrors: string[] = [];
   if (!amount.trim()) amountErrors.push('El monto es requerido');
   else if (Number(amount) <= 0) amountErrors.push('El monto debe ser mayor a cero');
   else if (Number(amount) > 999999999) amountErrors.push('El monto es demasiado grande');
+  else if (
+    type === 'EXPENSE' &&
+    availableBalance !== undefined &&
+    Number(amount) > availableBalance
+  ) {
+    amountErrors.push(`Balance insuficiente. Disponible: ${availableBalance.toFixed(2)}`);
+  }
   if (amountErrors.length) errors.amount = amountErrors;
 
   return errors;
@@ -62,7 +73,10 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
 
   const { data: categories = [], isLoading: loadingCategories } = useCategories(type);
   const { data: accounts = [] } = useAccounts();
+  const { data: accountBalances = [] } = useAccountBalances();
   const { mutateAsync: create, isPending } = useCreateTransaction();
+
+  const selectedAccountBalance = accountBalances.find((ab) => ab.accountId === accountId)?.balance;
 
   // Auto-select default account on first load
   useEffect(() => {
@@ -73,17 +87,22 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
     }
   }, [accounts, accountId]);
 
+  // Revalidate when type, account, or balance changes
+  useEffect(() => {
+    if (submitted) setFieldErrors(validate(amount, type, selectedAccountBalance));
+  }, [type, accountId, selectedAccountBalance]);
+
   function handleAmountChange(value: string) {
     const sanitized = sanitizeAmount(value);
     setAmount(sanitized);
-    if (submitted) setFieldErrors(validate(sanitized));
+    if (submitted) setFieldErrors(validate(sanitized, type, selectedAccountBalance));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitted(true);
 
-    const errors = validate(amount);
+    const errors = validate(amount, type, selectedAccountBalance);
     setFieldErrors(errors);
     if (hasErrors(errors)) return;
 
