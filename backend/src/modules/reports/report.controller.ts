@@ -7,6 +7,7 @@ const summarySchema = z.object({
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use format YYYY-MM-DD'),
   type: z.enum(['EXPENSE', 'INCOME']).optional(),
   categoryId: z.string().uuid().optional(),
+  accountId: z.string().uuid().optional(),
 });
 
 const comparisonSchema = z.object({
@@ -14,6 +15,7 @@ const comparisonSchema = z.object({
   period1End: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   period2Start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   period2End: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  accountId: z.string().uuid().optional(),
 });
 
 export async function getSummary(req: Request, res: Response) {
@@ -26,6 +28,7 @@ export async function getSummary(req: Request, res: Response) {
     endDate: validated.endDate,
     type: validated.type,
     categoryId: validated.categoryId,
+    accountId: validated.accountId,
   });
 
   res.json({ success: true, data: summary });
@@ -41,6 +44,7 @@ export async function getComparison(req: Request, res: Response) {
     validated.period1End,
     validated.period2Start,
     validated.period2End,
+    validated.accountId,
   );
 
   res.json({ success: true, data: comparison });

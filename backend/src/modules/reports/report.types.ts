@@ -4,6 +4,7 @@ export interface ReportFilters {
   endDate: string;
   type?: 'EXPENSE' | 'INCOME';
   categoryId?: string;
+  accountId?: string;
 }
 
 export interface CategoryBreakdown {

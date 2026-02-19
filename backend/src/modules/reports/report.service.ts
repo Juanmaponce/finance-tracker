@@ -14,7 +14,7 @@ const REPORT_CACHE_TTL = 300; // 5 minutes
 
 class ReportService {
   async getSummary(filters: ReportFilters): Promise<ReportSummary> {
-    const cacheKey = `report:${filters.userId}:${filters.startDate}:${filters.endDate}:${filters.type || 'all'}:${filters.categoryId || 'all'}`;
+    const cacheKey = `report:${filters.userId}:${filters.startDate}:${filters.endDate}:${filters.type || 'all'}:${filters.categoryId || 'all'}:${filters.accountId || 'all'}`;
 
     try {
       const cached = await redis.get(cacheKey);
@@ -34,6 +34,7 @@ class ReportService {
       endDate,
       filters.type,
       filters.categoryId,
+      filters.accountId,
     );
 
     // Pre-fetch exchange rates
@@ -131,10 +132,11 @@ class ReportService {
     period1End: string,
     period2Start: string,
     period2End: string,
+    accountId?: string,
   ): Promise<PeriodComparison> {
     const [p1, p2] = await Promise.all([
-      this.getSummary({ userId, startDate: period1Start, endDate: period1End }),
-      this.getSummary({ userId, startDate: period2Start, endDate: period2End }),
+      this.getSummary({ userId, startDate: period1Start, endDate: period1End, accountId }),
+      this.getSummary({ userId, startDate: period2Start, endDate: period2End, accountId }),
     ]);
 
     return {

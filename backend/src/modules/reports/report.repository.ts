@@ -11,6 +11,7 @@ class ReportRepository {
     endDate: Date,
     type?: string,
     categoryId?: string,
+    accountId?: string,
   ) {
     return prisma.transaction.findMany({
       where: {
@@ -19,6 +20,7 @@ class ReportRepository {
         date: { gte: startDate, lte: endDate },
         ...(type && { type: type as 'EXPENSE' | 'INCOME' }),
         ...(categoryId && { categoryId }),
+        ...(accountId && { accountId }),
       },
       include: { category: categorySelect },
       orderBy: { date: 'asc' },

@@ -16,10 +16,11 @@ export function useReportComparison(
   period2Start: string,
   period2End: string,
   enabled: boolean = true,
+  accountId?: string,
 ) {
   return useQuery({
-    queryKey: ['report-comparison', period1Start, period1End, period2Start, period2End],
-    queryFn: () => fetchComparison(period1Start, period1End, period2Start, period2End),
+    queryKey: ['report-comparison', period1Start, period1End, period2Start, period2End, accountId],
+    queryFn: () => fetchComparison(period1Start, period1End, period2Start, period2End, accountId),
     staleTime: 5 * 60 * 1000,
     enabled,
   });
